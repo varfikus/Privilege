@@ -1,0 +1,11 @@
+@Privilege.API_HostAddress = http://localhost:5220
+
+GET {{Privilege.API_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{Privilege.API_HostAddress}}/todos/1
+Accept: application/json
+
+###
