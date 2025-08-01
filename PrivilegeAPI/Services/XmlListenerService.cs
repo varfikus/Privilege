@@ -64,8 +64,8 @@ namespace PrivilegeAPI.Services
             }
             catch (HttpListenerException ex)
             {
-                _logger.LogError(ex, "Unexpected error starting HttpListener on {Url}", _url);
-                throw; 
+                _logger.LogError(ex, "Failed to start HttpListener on {Url}", _url);
+                throw;
             }
             catch (Exception ex)
             {
@@ -98,21 +98,9 @@ namespace PrivilegeAPI.Services
                 var clientIp = context.Request.RemoteEndPoint?.Address.ToString();
                 _logger.LogInformation("Received request from {ClientIp}", clientIp);
 
-                // Optional: Restrict to specific IP
-                // if (clientIp != "192.168.1.100")
-                // {
-                //     context.Response.StatusCode = 401;
-                //     var error = Encoding.UTF8.GetBytes("{\"Error\":\"Unauthorized IP address\"}");
-                //     context.Response.ContentLength64 = error.Length;
-                //     context.Response.ContentType = "application/json";
-                //     await context.Response.OutputStream.WriteAsync(error, 0, error.Length, cancellationToken);
-                //     context.Response.Close();
-                //     return;
-                // }
-
                 if (request.HttpMethod == "POST" && (request.ContentType == "text/xml" || request.ContentType == "application/xml"))
                 {
-                    using var reader = new System.IO.StreamReader(request.InputStream, request.ContentEncoding);
+                    using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
                     var xmlContent = await reader.ReadToEndAsync(cancellationToken);
                     _logger.LogDebug("Received XML: {XmlContent}", xmlContent);
 
@@ -122,6 +110,9 @@ namespace PrivilegeAPI.Services
                     var application = ParseXml(xmlContent);
                     dbContext.Applications.Add(application);
                     await dbContext.SaveChangesAsync(cancellationToken);
+
+                    // Save PDFs to FTP
+                    await SaveXmlToFtp(xmlContent, application.Id);
 
                     await _hubContext.Clients.All.SendAsync("ReceiveMessage", $"XML processed from {clientIp}. ApplicationId: {application.Id}", cancellationToken);
 
@@ -159,24 +150,116 @@ namespace PrivilegeAPI.Services
 
         private Application ParseXml(string xmlContent)
         {
-            XDocument doc = XDocument.Parse(xmlContent);
-            XElement root = doc.Root;
-
-            return new Application
+            try
             {
-                Organization = root.Element("Organization")?.Value ?? "",
-                FullName = root.Element("FullName")?.Value ?? "",
-                Address = root.Element("Address")?.Value ?? "",
-                PassportSeries = root.Element("PassportSeries")?.Value ?? "",
-                PassportNumber = root.Element("PassportNumber")?.Value ?? "",
-                IssuedBy = root.Element("IssuedBy")?.Value ?? "",
-                ContactPhone = root.Element("ContactPhone")?.Value ?? "",
-                Email = root.Element("Email")?.Value ?? "",
-                CardNumber = root.Element("CardNumber")?.Value ?? "",
-                BenefitCategory = root.Element("BenefitCategory")?.Value ?? "",
-                ApplicationDate = DateTime.Parse(root.Element("ApplicationDate")?.Value ?? DateTime.Now.ToString()),
-                ServiceId = root.Element("ServiceId")?.Value ?? ""
-            };
+                _logger.LogDebug("Parsing XML content: {XmlContent}", xmlContent);
+                XDocument doc;
+                try
+                {
+                    doc = XDocument.Parse(xmlContent);
+                }
+                catch (Exception ex)
+                {
+                    xmlContent = $"<root>{xmlContent}</root>";
+                    doc = XDocument.Parse(xmlContent);
+                    _logger.LogWarning("XML parsed as fragment with added root element");
+                }
+
+                XNamespace ns = "http://www.w3.org/1999/xhtml";
+                XElement htmlx = doc.Element(ns + "htmlx");
+                if (htmlx == null && doc.Element("root") != null)
+                {
+                    htmlx = doc.Element("root")?.Element(ns + "htmlx");
+                }
+                if (htmlx == null) throw new Exception("Missing htmlx element");
+
+                XElement body2 = htmlx.Element(ns + "body2");
+                if (body2 == null) throw new Exception("Missing body2 element");
+
+                XElement container = body2.Element(ns + "container");
+                if (container == null) throw new Exception("Missing container element");
+
+                XElement topheader = container.Element(ns + "topheader")?.Element(ns + "tophead");
+                XElement cardData = container.Element(ns + "card_data");
+
+                XElement persData = topheader?.Element(ns + "pers_data");
+                string fam = persData?.Element(ns + "fam")?.Value ?? "";
+                string im = persData?.Element(ns + "im")?.Value ?? "";
+                string ot = persData?.Element(ns + "ot")?.Value ?? "";
+                string fullName = $"{fam} {im} {ot}".Trim();
+                if (string.IsNullOrEmpty(fullName)) throw new Exception("FullName is required");
+
+                string benefitCategory = container.Element(ns + "lgota_text")?.Value ?? "";
+                if (string.IsNullOrEmpty(benefitCategory)) throw new Exception("BenefitCategory is required");
+
+                string cardNumber = cardData?.Element(ns + "last_4_digits")?.Value ?? "";
+
+                string dateString = container.Element(ns + "dateblank")?.Value;
+                if (!DateTime.TryParse(dateString, out DateTime applicationDate))
+                {
+                    _logger.LogWarning("Invalid or missing ApplicationDate, using current date");
+                    applicationDate = DateTime.Now;
+                }
+
+                XElement servinfo = body2.Element(ns + "servinfo");
+                if (servinfo == null) throw new Exception("At least one servinfo element is required");
+
+                string serviceId = servinfo.Element(ns + "idservice")?.Value ?? "";
+                string serviceName = servinfo.Element(ns + "nameservice")?.Value ?? "";
+                if (string.IsNullOrEmpty(serviceName)) throw new Exception("ServiceName is required");
+
+                _logger.LogInformation("Parsed XML: FullName={FullName}, ServiceName={ServiceName}, ApplicationDate={ApplicationDate}, BenefitCategory={BenefitCategory}, CardNumber={CardNumber}, ServiceId={ServiceId}",
+                    fullName, serviceName, applicationDate, benefitCategory, cardNumber, serviceId);
+
+                return new Application
+                {
+                    FullName = fullName,
+                    ServiceName = serviceName,
+                    ApplicationDate = applicationDate,
+                    BenefitCategory = benefitCategory,
+                    CardNumber = cardNumber,
+                    ServiceId = serviceId
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to parse XML");
+                throw new Exception($"Failed to parse XML: {ex.Message}", ex);
+            }
+        }
+
+        private async Task SaveXmlToFtp(string xmlContent, int applicationId)
+        {
+            try
+            {
+                _logger.LogInformation("Saving XML for ApplicationId {ApplicationId} to FTP", applicationId);
+                string ftpServer = "ftp://192.168.1.100:21";
+                string ftpUser = "ftp_user";
+                string ftpPassword = "ftp_password";
+                string ftpDirectory = "/Applications";
+                string ftpPath = $"{ftpServer}{ftpDirectory}/{DateTime.Now:yyyyMMddHHmmss}_Application_{applicationId}.xml";
+
+                FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ftpPath);
+                request.Method = WebRequestMethods.Ftp.UploadFile;
+                request.Credentials = new NetworkCredential(ftpUser, ftpPassword);
+                request.UseBinary = true;
+
+                byte[] xmlBytes = Encoding.UTF8.GetBytes(xmlContent);
+                using (Stream requestStream = await request.GetRequestStreamAsync())
+                {
+                    await requestStream.WriteAsync(xmlBytes, 0, xmlBytes.Length);
+                }
+
+                using (FtpWebResponse response = (FtpWebResponse)await request.GetResponseAsync())
+                {
+                    _logger.LogInformation("Uploaded XML for ApplicationId {ApplicationId} to FTP: {Status}", applicationId, response.StatusDescription);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to save XML for ApplicationId {ApplicationId} to FTP", applicationId);
+                throw;
+            }
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
