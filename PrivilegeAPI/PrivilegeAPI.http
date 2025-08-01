@@ -1,0 +1,6 @@
+@PrivilegeAPI_HostAddress = http://localhost:5058
+
+GET {{PrivilegeAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
