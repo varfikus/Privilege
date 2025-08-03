@@ -88,12 +88,11 @@ namespace PrivilegeAPI.Hubs
 
                 return new Application
                 {
-                    FullName = fullName,
-                    ServiceName = serviceName,
-                    ApplicationDate = applicationDate,
-                    BenefitCategory = benefitCategory,
-                    CardNumber = cardNumber,
-                    ServiceId = serviceId
+                    Name = fullName,
+                    Status = benefitCategory,
+                    DateAdd = applicationDate.ToString("yyyy-MM-dd"),
+                    DateEdit = DateTime.Now.ToString("yyyy-MM-dd"),
+                    File = null
                 };
             }
             catch (Exception ex)

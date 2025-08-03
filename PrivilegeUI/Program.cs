@@ -1,6 +1,6 @@
-using PrivilegeUI.Models;
+using Privilege.UI.Window.Client;
 
-namespace PrivilegeUI
+namespace Privilege.UI
 {
     internal static class Program
     {
@@ -13,7 +13,7 @@ namespace PrivilegeUI
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            System.Windows.Forms.Application.Run(new MainForm());
+            Application.Run(new FormMain());
         }
     }
 }

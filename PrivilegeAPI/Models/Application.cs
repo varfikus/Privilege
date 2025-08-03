@@ -5,11 +5,11 @@ namespace PrivilegeAPI.Models
     public class Application
     {
         public int Id { get; set; }
-        public string FullName { get; set; } = string.Empty;
-        public string ServiceName { get; set; } = string.Empty;
-        public DateTime ApplicationDate { get; set; }
-        public string BenefitCategory { get; set; } = string.Empty;
-        public string CardNumber { get; set; } = string.Empty;
-        public string ServiceId { get; set; } = string.Empty;
+        public string Name { get; set; }
+        public int FileId { get; set; }
+        public string Status { get; set; }
+        public string DateAdd { get; set; }
+        public string DateEdit { get; set; }
+        public File File { get; set; }
     }
 }

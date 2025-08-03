@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentFTP" Version="53.0.1" />
     <PackageReference Include="Microsoft.AspNet.SignalR.Client" Version="2.4.3" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client.Core" Version="9.0.7" />
@@ -19,6 +20,10 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PrivilegeAPI\PrivilegeAPI.csproj" />
   </ItemGroup>
 
 </Project>
