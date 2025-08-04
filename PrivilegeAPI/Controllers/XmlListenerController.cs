@@ -25,7 +25,7 @@ namespace PrivilegeAPI.Controllers
         //public async Task<IActionResult> ReceiveXml([FromBody] string xmlContent)
         //{
         //    var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        //    // Optional: Restrict to specific IP
+
         //    // if (clientIp != "192.168.1.100")
         //    // {
         //    //     return Unauthorized(new { Error = "Request from unauthorized IP address." });
@@ -132,9 +132,9 @@ namespace PrivilegeAPI.Controllers
                 return new Application
                 {
                     Name = fullName,
-                    Status = benefitCategory,
-                    DateAdd = applicationDate.ToString("yyyy-MM-dd"),
-                    DateEdit = DateTime.Now.ToString("yyyy-MM-dd"),
+                    Status = StatusEnum.Delivered,
+                    DateAdd = applicationDate,
+                    DateEdit = DateTime.Now,
                     File = file
                 };
             }

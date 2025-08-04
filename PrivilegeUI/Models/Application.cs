@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PrivilegeAPI.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace PrivilegeUI.Models
 {
     public class Application
     {
         public int Id { get; set; }
-        public string FullName { get; set; } = string.Empty;
-        public string ServiceName { get; set; } = string.Empty;
-        public DateTime ApplicationDate { get; set; }
-        public string BenefitCategory { get; set; } = string.Empty;
-        public string CardNumber { get; set; } = string.Empty;
-        public string ServiceId { get; set; } = string.Empty;
+        public string Name { get; set; }
+        public int FileId { get; set; }
+        public StatusEnum Status { get; set; }
+        public DateTime DateAdd { get; set; }
+        public DateTime DateEdit { get; set; }
+        public File File { get; set; }
     }
 }

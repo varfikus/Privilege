@@ -4,7 +4,7 @@ using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace Privilege.UI.Classes
+namespace PrivilegeUI.Classes
 {
     public static class FormSavingSettings
     {

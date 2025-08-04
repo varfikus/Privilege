@@ -1,4 +1,4 @@
-﻿using Privilege.UI.Window.Client;
+﻿using PrivilegeUI;
 
 namespace PrivilegeUI
 {
@@ -59,23 +59,7 @@ namespace PrivilegeUI
             lbl_add = new Label();
             label1 = new Label();
             panelDesktop = new Panel();
-            id = new DataGridViewTextBoxColumn();
-            npp = new DataGridViewTextBoxColumn();
-            num_id = new DataGridViewTextBoxColumn();
-            fio = new DataGridViewTextBoxColumn();
-            birthday = new DataGridViewTextBoxColumn();
-            address_reg = new DataGridViewTextBoxColumn();
-            electronic = new DataGridViewCheckBoxColumn();
-            date_add = new DataGridViewTextBoxColumn();
-            status = new DataGridViewTextBoxColumn();
-            days_left = new DataGridViewTextBoxColumn();
-            date_ispoln = new DataGridViewTextBoxColumn();
-            id_gosuslug = new DataGridViewTextBoxColumn();
-            service_id = new DataGridViewTextBoxColumn();
-            region = new DataGridViewTextBoxColumn();
-            office = new DataGridViewTextBoxColumn();
-            name_usl = new DataGridViewTextBoxColumn();
-            opek_fio = new DataGridViewTextBoxColumn();
+            dGV = new PrivilegeUI.MyControls.DoubleBufferedDataGridView();
             timer_refresh = new System.Windows.Forms.Timer(components);
             panelLogo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pB_header).BeginInit();
@@ -83,6 +67,8 @@ namespace PrivilegeUI
             panelTitle.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pB_CurrentChildForm).BeginInit();
             panelDown.SuspendLayout();
+            panelDesktop.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dGV).BeginInit();
             SuspendLayout();
             // 
             // backgroundWorker1
@@ -97,6 +83,7 @@ namespace PrivilegeUI
             btn_exit.FlatStyle = FlatStyle.Flat;
             btn_exit.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_exit.ForeColor = Color.Gainsboro;
+            btn_exit.Image = Properties.Resources.go_back_white_40;
             btn_exit.ImageAlign = ContentAlignment.MiddleLeft;
             btn_exit.Location = new Point(0, 799);
             btn_exit.Margin = new Padding(4, 3, 4, 3);
@@ -126,18 +113,19 @@ namespace PrivilegeUI
             labelHeader.Cursor = Cursors.Hand;
             labelHeader.Font = new Font("Arial Black", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             labelHeader.ForeColor = Color.WhiteSmoke;
-            labelHeader.Location = new Point(6, 9);
+            labelHeader.Location = new Point(85, 15);
             labelHeader.Margin = new Padding(4, 0, 4, 0);
             labelHeader.Name = "labelHeader";
-            labelHeader.Size = new Size(210, 90);
+            labelHeader.Size = new Size(95, 90);
             labelHeader.TabIndex = 0;
-            labelHeader.Text = "Министерство\r\nэкономического\r\nразвития";
+            labelHeader.Text = "Заявки\nНа\nЛьготу";
             labelHeader.TextAlign = ContentAlignment.MiddleCenter;
             labelHeader.Click += pB_header_Click;
             // 
             // pB_header
             // 
             pB_header.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            pB_header.BorderStyle = BorderStyle.FixedSingle;
             pB_header.Cursor = Cursors.Hand;
             pB_header.Location = new Point(10, 5);
             pB_header.Margin = new Padding(4, 3, 4, 3);
@@ -190,6 +178,7 @@ namespace PrivilegeUI
             btn_cancel.FlatStyle = FlatStyle.Flat;
             btn_cancel.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_cancel.ForeColor = Color.Gainsboro;
+            btn_cancel.Image = Properties.Resources.cancel_subscription_white_40;
             btn_cancel.ImageAlign = ContentAlignment.MiddleLeft;
             btn_cancel.Location = new Point(0, 539);
             btn_cancel.Margin = new Padding(4, 3, 4, 3);
@@ -210,6 +199,7 @@ namespace PrivilegeUI
             btn_finalyPaper.FlatStyle = FlatStyle.Flat;
             btn_finalyPaper.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_finalyPaper.ForeColor = Color.Gainsboro;
+            btn_finalyPaper.Image = Properties.Resources.submit_document_white_40;
             btn_finalyPaper.ImageAlign = ContentAlignment.MiddleLeft;
             btn_finalyPaper.Location = new Point(0, 470);
             btn_finalyPaper.Margin = new Padding(4, 3, 4, 3);
@@ -230,6 +220,7 @@ namespace PrivilegeUI
             btn_archive.FlatStyle = FlatStyle.Flat;
             btn_archive.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_archive.ForeColor = Color.Gainsboro;
+            btn_archive.Image = Properties.Resources.winrar_white_40;
             btn_archive.ImageAlign = ContentAlignment.MiddleLeft;
             btn_archive.Location = new Point(0, 661);
             btn_archive.Margin = new Padding(4, 3, 4, 3);
@@ -250,6 +241,7 @@ namespace PrivilegeUI
             btn_settings.FlatStyle = FlatStyle.Flat;
             btn_settings.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_settings.ForeColor = Color.Gainsboro;
+            btn_settings.Image = Properties.Resources.settings_white_40;
             btn_settings.ImageAlign = ContentAlignment.MiddleLeft;
             btn_settings.Location = new Point(0, 730);
             btn_settings.Margin = new Padding(4, 3, 4, 3);
@@ -270,6 +262,7 @@ namespace PrivilegeUI
             btn_finaly.FlatStyle = FlatStyle.Flat;
             btn_finaly.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_finaly.ForeColor = Color.Gainsboro;
+            btn_finaly.Image = Properties.Resources.ok_white_40;
             btn_finaly.ImageAlign = ContentAlignment.MiddleLeft;
             btn_finaly.Location = new Point(0, 401);
             btn_finaly.Margin = new Padding(4, 3, 4, 3);
@@ -290,6 +283,7 @@ namespace PrivilegeUI
             btn_denial.FlatStyle = FlatStyle.Flat;
             btn_denial.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_denial.ForeColor = Color.Gainsboro;
+            btn_denial.Image = Properties.Resources.clipboard_white_40;
             btn_denial.ImageAlign = ContentAlignment.MiddleLeft;
             btn_denial.Location = new Point(0, 332);
             btn_denial.Margin = new Padding(4, 3, 4, 3);
@@ -310,6 +304,7 @@ namespace PrivilegeUI
             btn_apply.FlatStyle = FlatStyle.Flat;
             btn_apply.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_apply.ForeColor = Color.Gainsboro;
+            btn_apply.Image = Properties.Resources.add_to_clipboard_white_40;
             btn_apply.ImageAlign = ContentAlignment.MiddleLeft;
             btn_apply.Location = new Point(0, 263);
             btn_apply.Margin = new Padding(4, 3, 4, 3);
@@ -330,6 +325,7 @@ namespace PrivilegeUI
             btn_info.FlatStyle = FlatStyle.Flat;
             btn_info.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_info.ForeColor = Color.Gainsboro;
+            btn_info.Image = Properties.Resources.info_white_40;
             btn_info.ImageAlign = ContentAlignment.MiddleLeft;
             btn_info.Location = new Point(0, 194);
             btn_info.Margin = new Padding(4, 3, 4, 3);
@@ -350,6 +346,7 @@ namespace PrivilegeUI
             btn_refresh.FlatStyle = FlatStyle.Flat;
             btn_refresh.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
             btn_refresh.ForeColor = Color.Gainsboro;
+            btn_refresh.Image = Properties.Resources.update_left_rotation_white_40;
             btn_refresh.ImageAlign = ContentAlignment.MiddleLeft;
             btn_refresh.Location = new Point(0, 125);
             btn_refresh.Margin = new Padding(4, 3, 4, 3);
@@ -392,6 +389,7 @@ namespace PrivilegeUI
             btn_update.Cursor = Cursors.Hand;
             btn_update.FlatAppearance.BorderSize = 0;
             btn_update.FlatStyle = FlatStyle.Flat;
+            btn_update.Image = Properties.Resources.synchronize_white_40;
             btn_update.Location = new Point(1073, 5);
             btn_update.Margin = new Padding(4, 3, 4, 3);
             btn_update.Name = "btn_update";
@@ -404,6 +402,7 @@ namespace PrivilegeUI
             // 
             pB_CurrentChildForm.Anchor = AnchorStyles.Left;
             pB_CurrentChildForm.BackgroundImageLayout = ImageLayout.Zoom;
+            pB_CurrentChildForm.Image = Properties.Resources.home_white_96;
             pB_CurrentChildForm.Location = new Point(24, 5);
             pB_CurrentChildForm.Margin = new Padding(4, 3, 4, 3);
             pB_CurrentChildForm.Name = "pB_CurrentChildForm";
@@ -515,6 +514,7 @@ namespace PrivilegeUI
             // 
             panelDesktop.AutoScroll = true;
             panelDesktop.BackColor = Color.FromArgb(148, 153, 165);
+            panelDesktop.Controls.Add(dGV);
             panelDesktop.Dock = DockStyle.Fill;
             panelDesktop.Location = new Point(257, 64);
             panelDesktop.Margin = new Padding(4, 3, 4, 3);
@@ -522,116 +522,18 @@ namespace PrivilegeUI
             panelDesktop.Size = new Size(1124, 769);
             panelDesktop.TabIndex = 11;
             // 
-            // id
+            // dGV
             // 
-            id.HeaderText = "id";
-            id.Name = "id";
-            id.ReadOnly = true;
-            id.Visible = false;
-            // 
-            // npp
-            // 
-            npp.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-            npp.HeaderText = "№ п/п";
-            npp.Name = "npp";
-            npp.ReadOnly = true;
-            // 
-            // num_id
-            // 
-            num_id.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-            num_id.HeaderText = "Год.ID";
-            num_id.Name = "num_id";
-            num_id.ReadOnly = true;
-            // 
-            // fio
-            // 
-            fio.HeaderText = "ФИО заявителя";
-            fio.Name = "fio";
-            fio.ReadOnly = true;
-            // 
-            // birthday
-            // 
-            birthday.HeaderText = "День рождения заявителя";
-            birthday.Name = "birthday";
-            birthday.ReadOnly = true;
-            birthday.Visible = false;
-            // 
-            // address_reg
-            // 
-            address_reg.HeaderText = "Адрес прописки";
-            address_reg.Name = "address_reg";
-            address_reg.ReadOnly = true;
-            address_reg.Visible = false;
-            // 
-            // electronic
-            // 
-            electronic.HeaderText = "В эл. виде?";
-            electronic.Name = "electronic";
-            electronic.ReadOnly = true;
-            // 
-            // date_add
-            // 
-            date_add.HeaderText = "Дата";
-            date_add.Name = "date_add";
-            date_add.ReadOnly = true;
-            // 
-            // status
-            // 
-            status.HeaderText = "Статус";
-            status.Name = "status";
-            status.ReadOnly = true;
-            // 
-            // days_left
-            // 
-            days_left.HeaderText = "Осталось дней";
-            days_left.Name = "days_left";
-            days_left.ReadOnly = true;
-            // 
-            // date_ispoln
-            // 
-            date_ispoln.HeaderText = "Дата исполнения";
-            date_ispoln.Name = "date_ispoln";
-            date_ispoln.ReadOnly = true;
-            date_ispoln.Visible = false;
-            // 
-            // id_gosuslug
-            // 
-            id_gosuslug.HeaderText = "ID госуслуг";
-            id_gosuslug.Name = "id_gosuslug";
-            id_gosuslug.ReadOnly = true;
-            id_gosuslug.Visible = false;
-            // 
-            // service_id
-            // 
-            service_id.HeaderText = "service_id";
-            service_id.Name = "service_id";
-            service_id.ReadOnly = true;
-            service_id.Visible = false;
-            // 
-            // region
-            // 
-            region.HeaderText = "Город";
-            region.Name = "region";
-            region.ReadOnly = true;
-            // 
-            // office
-            // 
-            office.HeaderText = "Учреждение";
-            office.Name = "office";
-            office.ReadOnly = true;
-            // 
-            // name_usl
-            // 
-            name_usl.HeaderText = "Название услуги";
-            name_usl.Name = "name_usl";
-            name_usl.ReadOnly = true;
-            // 
-            // opek_fio
-            // 
-            opek_fio.HeaderText = "opek_fio";
-            opek_fio.Name = "opek_fio";
-            opek_fio.ReadOnly = true;
-            opek_fio.Visible = false;
+            dGV.AllowUserToAddRows = false;
+            dGV.AllowUserToDeleteRows = false;
+            dGV.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dGV.Dock = DockStyle.Fill;
+            dGV.Location = new Point(0, 0);
+            dGV.Name = "dGV";
+            dGV.ReadOnly = true;
+            dGV.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dGV.Size = new Size(1124, 769);
+            dGV.TabIndex = 0;
             // 
             // FormMain
             // 
@@ -662,6 +564,8 @@ namespace PrivilegeUI
             ((System.ComponentModel.ISupportInitialize)pB_CurrentChildForm).EndInit();
             panelDown.ResumeLayout(false);
             panelDown.PerformLayout();
+            panelDesktop.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dGV).EndInit();
             ResumeLayout(false);
         }
 
@@ -689,24 +593,7 @@ namespace PrivilegeUI
         private System.Windows.Forms.Button btn_archive;
         private System.Windows.Forms.Button btn_cancel;
         private System.Windows.Forms.Button btn_finalyPaper;
-        private Privilege.UI.MyControls.DoubleBufferedDataGridView dGV;
-        private System.Windows.Forms.DataGridViewTextBoxColumn id;
-        private System.Windows.Forms.DataGridViewTextBoxColumn npp;
-        private System.Windows.Forms.DataGridViewTextBoxColumn num_id;
-        private System.Windows.Forms.DataGridViewTextBoxColumn fio;
-        private System.Windows.Forms.DataGridViewTextBoxColumn birthday;
-        private System.Windows.Forms.DataGridViewTextBoxColumn address_reg;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn electronic;
-        private System.Windows.Forms.DataGridViewTextBoxColumn date_add;
-        private System.Windows.Forms.DataGridViewTextBoxColumn status;
-        private System.Windows.Forms.DataGridViewTextBoxColumn days_left;
-        private System.Windows.Forms.DataGridViewTextBoxColumn date_ispoln;
-        private System.Windows.Forms.DataGridViewTextBoxColumn id_gosuslug;
-        private System.Windows.Forms.DataGridViewTextBoxColumn service_id;
-        private System.Windows.Forms.DataGridViewTextBoxColumn region;
-        private System.Windows.Forms.DataGridViewTextBoxColumn office;
-        private System.Windows.Forms.DataGridViewTextBoxColumn name_usl;
-        private System.Windows.Forms.DataGridViewTextBoxColumn opek_fio;
+        private MyControls.DoubleBufferedDataGridView dGV;
         private System.Windows.Forms.Timer timer_refresh;
         private System.Windows.Forms.Label lbl_apply;
         private System.Windows.Forms.Label label3;

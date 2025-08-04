@@ -26,6 +26,18 @@ public class Startup
 
         services.AddSignalR();
 
+        services.AddSingleton<FtpSettings>(provider =>
+        {
+            return new FtpSettings
+            {
+                Server = Configuration["Ftp:Server"],
+                Port = int.Parse(Configuration["Ftp:Port"]),
+                Username = Configuration["Ftp:Username"],
+                Password = Configuration["Ftp:Password"]
+            };
+        });
+
+        services.AddSingleton<FtpService>();
         services.AddHostedService<XmlListenerService>();
 
         services.AddCors(options =>

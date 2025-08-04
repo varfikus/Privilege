@@ -89,9 +89,9 @@ namespace PrivilegeAPI.Hubs
                 return new Application
                 {
                     Name = fullName,
-                    Status = benefitCategory,
-                    DateAdd = applicationDate.ToString("yyyy-MM-dd"),
-                    DateEdit = DateTime.Now.ToString("yyyy-MM-dd"),
+                    Status = StatusEnum.Delivered,
+                    DateAdd = applicationDate,
+                    DateEdit = DateTime.Now,
                     File = null
                 };
             }

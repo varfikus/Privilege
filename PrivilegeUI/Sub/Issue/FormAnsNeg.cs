@@ -5,13 +5,13 @@ using System.IO;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
-using Privilege.UI.Classes;
-using Privilege.UI.Classes.Signature;
+using PrivilegeUI.Classes;
+using PrivilegeUI.Classes.Signature;
 using MySql.Data.MySqlClient;
 
-namespace Privilege.UI.Window.Client.Sub.Issue
+namespace PrivilegeUI.Sub.Issue
 {
-    public partial class FormAnsPaper : Form
+    public partial class FormAnsNeg : Form
     {
         #region Fields
 
@@ -46,7 +46,7 @@ namespace Privilege.UI.Window.Client.Sub.Issue
 
         #region Constructor
 
-        public FormAnsPaper(FormMain parentForm, DataGridViewRow row)
+        public FormAnsNeg(FormMain parentForm, DataGridViewRow row)
         {
             InitializeComponent();
             _parentForm = parentForm;
@@ -58,7 +58,7 @@ namespace Privilege.UI.Window.Client.Sub.Issue
 
         #region Events
 
-        private void FormAnsPaper_Load(object sender, EventArgs e)
+        private void FormAnsNeg_Load(object sender, EventArgs e)
         {
             tB_operator.Text = UserInfo.Name;
             tB_operatorTel.Text = UserInfo.Tel;
@@ -70,49 +70,6 @@ namespace Privilege.UI.Window.Client.Sub.Issue
             tB_service.Text = _row.Cells["name_usl"].Value.ToString();
 
             lbl_header.Text += @" [" + _idGosUslugi + @"]";
-
-            //скрытие лишних полей
-            switch (_idService)
-            {
-                case 313:
-                    lbl_considTime.Visible = false;
-                    dTP_considTime.Visible = false;
-                    lbl_timeFrom.Visible = false;
-                    lbl_timeTo.Visible = false;
-                    dTP_timeFrom.Visible = false;
-                    dTP_timeTo.Visible = false;
-                    break;
-                case 302:
-                case 304:
-                case 305:
-                case 307:
-                case 308:
-                case 318:
-                case 319:
-                case 321:
-                    lbl_cab.Visible = false;
-                    tB_cab.Visible = false;
-                    lbl_considTime.Visible = false;
-                    dTP_considTime.Visible = false;
-                    break;
-                case 447:
-                    lbl_considTime.Visible = false;
-                    dTP_considTime.Visible = false;
-                    break;
-                default:
-                    lbl_cab.Visible = false;
-                    tB_cab.Visible = false;
-                    lbl_timeFrom.Visible = false;
-                    lbl_timeTo.Visible = false;
-                    dTP_timeFrom.Visible = false;
-                    dTP_timeTo.Visible = false;
-                    break;
-            }
-
-            DateTime date = DateTime.Now;
-            dTP_considTime.Value = new DateTime(date.Year, date.Month, date.Day, 8, 0, 0);
-            dTP_timeFrom.Value = new DateTime(date.Year, date.Month, date.Day, 8, 0, 0);
-            dTP_timeTo.Value = new DateTime(date.Year, date.Month, date.Day, 17, 0, 0);
         }
 
         private void btnOk_Click(object sender, EventArgs e)
@@ -170,6 +127,15 @@ namespace Privilege.UI.Window.Client.Sub.Issue
                 lbl_fio.ForeColor = Color.Red;
                 toolTip1.SetToolTip(lbl_fio, caption);
                 toolTip1.SetToolTip(tB_fio, caption);
+                f = false;
+            }
+
+            if (tB_denial.Text == "")
+            {
+                string caption = "Это поле не может быть пустым";
+                lbl_denial.ForeColor = Color.Red;
+                toolTip1.SetToolTip(lbl_denial, caption);
+                toolTip1.SetToolTip(tB_denial, caption);
                 f = false;
             }
 
@@ -251,23 +217,16 @@ namespace Privilege.UI.Window.Client.Sub.Issue
                             case 447:
                                 content.Add(
                                     new XElement(ns + "p",
-                                        "Уважаемый(ая) " + tB_fio.Text + ". Сообщаем Вам о готовности запрошенной официальной " +
-                                        "статистической информации. Вы можете её получить " +
-                                        "по адресу " + tB_mesto.Text + ", кабинет " + tB_cab.Text +
-                                        " в любой день начиная с " + dTP_consid.Value.ToShortDateString() +
-                                        " с " + dTP_timeFrom.Value.ToString("t") +
-                                        " по " + dTP_timeTo.Value.ToString("t") + "."));
+                                        "Уважаемый(ая) " + tB_fio.Text +
+                                        ". Сообщаем Вам о невозможности выдачи Вам запрошенной официальной " +
+                                        "статистической информации по причине " + tB_denial.Text + "."));
                                 break;
                             default:
-                                {
-                                    content.Add(
-                                        new XElement(ns + "p",
-                                            "Уважаемый(ая), " + tB_fio.Text + ", сообщаем Вам о готовности заказанной Вами услуги «" +
-                                            _row.Cells["name_usl"].Value + "». " +
-                                            "Вы можете Получить результат вы можете с " + dTP_consid.Value.ToString("d") +
-                                            " по будням в рабочее время  по адресу г.Тирасполь, ул.25 Октября, д.114, кабинет " +
-                                            tB_cab.Text + "."));
-                                }
+                                content.Add(
+                                    new XElement(ns + "p",
+                                        "Уважаемый(ая) " + tB_fio.Text +
+                                        ". Сообщаем Вам о невозможности оказания Вам услуги «" + tB_service.Text +
+                                        "» по причине того, что " + tB_denial.Text + "."));
                                 break;
                         }
 
@@ -383,14 +342,14 @@ namespace Privilege.UI.Window.Client.Sub.Issue
                                   "flag_file_finaly = @flag_file_finaly " +
                                   "WHERE id = @id";
 
-                cmd.Parameters.AddWithValue("@status", 6);
+                cmd.Parameters.AddWithValue("@status", 4);
                 cmd.Parameters.AddWithValue("@date_ispoln", dTP_dateOut.Value);
                 cmd.Parameters.AddWithValue("@file_finaly", file);
                 cmd.Parameters.AddWithValue("@flag_file_finaly", 0);
                 cmd.Parameters.AddWithValue("@id", _id);
                 cmd.ExecuteNonQuery();
-                Logger.Log.Warn("[" + _id + "] " + "Документ выдан в бумаге");
-                Connection.AddLogs(_id.ToString(), "Документ выдан в бумаге");
+                Logger.Log.Warn("[" + _id + "] " + "Отказано в выдаче документа");
+                Connection.AddLogs(_id.ToString(), "Отказано в выдаче документа");
                 return true;
             }
             catch (Exception ex)
@@ -413,7 +372,7 @@ namespace Privilege.UI.Window.Client.Sub.Issue
         /// </summary>
         private int SaveFile()
         {
-            int serviceResult = 1;
+            int serviceResult = 0;
             string param = "{\"serviceId\":\"" + _idGosUslugi + "\", \"serviceResult\":" + serviceResult + "}";
             string signature = "";
 
@@ -498,7 +457,7 @@ namespace Privilege.UI.Window.Client.Sub.Issue
                 cmd.Parameters.AddWithValue("@param_signature", signature);
                 cmd.ExecuteNonQuery();
                 cmd = conn.CreateCommand();
-                cmd.CommandText += "SELECT @@IDENTITY";    //Получение id
+                cmd.CommandText += "SELECT @@IDENTITY";
                 int id = Convert.ToInt32(cmd.ExecuteScalar());
                 Logger.Log.Info("[" + _id + "] Файл сохранён в базе данных");
                 return id;

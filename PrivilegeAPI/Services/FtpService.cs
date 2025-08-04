@@ -1,90 +1,168 @@
-﻿using System.Net;
+﻿using FluentFTP;
+using Microsoft.Extensions.Hosting;
+using PrivilegeAPI.Models;
+using System.Net;
 using System.Text;
-using System.Xml.Linq;
 
 namespace PrivilegeAPI.Services
 {
+    public class FtpSettings
+    {
+        public string Server { get; set; }
+        public int Port { get; set; } = 21;
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
+
     public class FtpService
     {
-        private async Task SaveXmlToFtp(string xmlContent, int applicationId)
+        private readonly AsyncFtpClient _ftpClient;
+
+        public FtpService(FtpSettings settings)
+        {
+            _ftpClient = new AsyncFtpClient
+            {
+                Host = settings.Server,
+                Port = settings.Port,
+                Credentials = new NetworkCredential(settings.Username, settings.Password),
+            };
+
+            _ftpClient.Config.EncryptionMode = FtpEncryptionMode.Explicit; 
+            _ftpClient.Config.ValidateAnyCertificate = true;
+        }
+
+        public async Task ConnectAsync()
+        {
+            if (!_ftpClient.IsConnected)
+                await _ftpClient.Connect();
+        }
+
+        private async Task EnsureConnectedAsync()
+        {
+            if (!_ftpClient.IsConnected)
+                await _ftpClient.Connect();
+        }
+
+        
+
+        public async Task<bool> SaveFileAsync(string remotePath, string content)
         {
             try
             {
-                string ftpServer = "127.0.0.1";
-                string ftpUser = "admin";
-                string ftpPassword = "admin";
-                int Port = 21;
-                string ftpDirectory = "/Applications";
-                string ftpPath = $"ftp://{ftpServer}{ftpDirectory}/{DateTime.Now:yyyyMMddHHmmss}_Application_{applicationId}.xml";
-
-                FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ftpPath);
-                request.Method = WebRequestMethods.Ftp.UploadFile;
-                request.Credentials = new NetworkCredential(ftpUser, ftpPassword);
-                request.UseBinary = true;
-                request.KeepAlive = false;
-                request.EnableSsl = false;
-
-                byte[] xmlBytes = Encoding.UTF8.GetBytes(xmlContent);
-                using (Stream requestStream = await request.GetRequestStreamAsync())
-                {
-                    await requestStream.WriteAsync(xmlBytes, 0, xmlBytes.Length);
-                }
-
+                await EnsureConnectedAsync();
+                byte[] bytes = Encoding.UTF8.GetBytes(content);
+                var status = await _ftpClient.UploadBytes(bytes, remotePath, FtpRemoteExists.Overwrite, true);
+                return status == FtpStatus.Success;
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to save XML to FTP: {ex.Message}", ex);
+                Console.WriteLine("Ошибка при сохранении файла: " + ex.Message);
+                return false;
             }
         }
 
-        public static async Task<bool> SaveFileFtpAsync(XDocument xdoc, string ftpPath)
+        public async Task<bool> DownloadFileAsync(string remotePath, string localPath)
         {
             try
             {
-                string ftpServer = "127.0.0.1";
-                string ftpUser = "admin";
-                string ftpPassword = "admin";
-                int ftpPort = 21;
-
-                ftpPath = ftpPath.Replace("\\", "/");
-                if (!ftpPath.StartsWith("/"))
-                    ftpPath = "/" + ftpPath;
-
-                string fileName = Path.GetFileName(ftpPath);
-                if (string.IsNullOrWhiteSpace(fileName))
-                    throw new ArgumentException("FTP-путь не должен оканчиваться на слэш и должен содержать имя файла.");
-
-                string fullUri = $"ftp://{ftpServer}:{ftpPort}{ftpPath}";
-
-                byte[] fileContents;
-                using (var memoryStream = new MemoryStream())
-                {
-                    xdoc.Save(memoryStream);
-                    fileContents = memoryStream.ToArray();
-                }
-
-                FtpWebRequest request = (FtpWebRequest)WebRequest.Create(fullUri);
-                request.Method = WebRequestMethods.Ftp.UploadFile;
-                request.Credentials = new NetworkCredential(ftpUser, ftpPassword);
-                request.UseBinary = true;
-                request.KeepAlive = false;
-                request.EnableSsl = false;
-
-                using (Stream requestStream = await request.GetRequestStreamAsync())
-                {
-                    await requestStream.WriteAsync(fileContents, 0, fileContents.Length);
-                }
-
-                using (var response = (FtpWebResponse)await request.GetResponseAsync())
-                {
-                    return response.StatusCode == FtpStatusCode.ClosingData;
-                }
+                await EnsureConnectedAsync();
+                var status = await _ftpClient.DownloadFile(localPath, remotePath, FtpLocalExists.Overwrite, FtpVerify.None);
+                return status == FtpStatus.Success;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Ошибка при сохранении XML на FTP: " + ex.Message);
+                Console.WriteLine("Ошибка при скачивании файла: " + ex.Message);
                 return false;
             }
+        }
+
+        public async Task<Stream?> OpenReadAsync(string remotePath)
+        {
+            try
+            {
+                await EnsureConnectedAsync();
+
+                if (!await _ftpClient.FileExists(remotePath))
+                    return null;
+
+                var stream = await _ftpClient.OpenRead(remotePath);
+                return stream;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при открытии потока для чтения: " + ex.Message);
+                return null;
+            }
+        }
+
+        public async Task<string?> ReadFileAsync(string remotePath)
+        {
+            try
+            {
+                await EnsureConnectedAsync();
+                if (!await _ftpClient.FileExists(remotePath))
+                    return null;
+
+                var data = await _ftpClient.DownloadBytes(remotePath, 0);
+                return Encoding.UTF8.GetString(data);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при чтении файла: " + ex.Message);
+                return null;
+            }
+        }
+
+        public async Task<bool> DeleteFileAsync(string remotePath)
+        {
+            try
+            {
+                await EnsureConnectedAsync();
+                if (!await _ftpClient.FileExists(remotePath))
+                    return false;
+                await _ftpClient.DeleteFile(remotePath);
+                    return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при удалении файла: " + ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<bool> FileExistsAsync(string remotePath)
+        {
+            try
+            {
+                await EnsureConnectedAsync();
+                return await _ftpClient.FileExists(remotePath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при проверке файла: " + ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<List<string>> ListDirectoryAsync(string remotePath)
+        {
+            try
+            {
+                await EnsureConnectedAsync();
+                var items = await _ftpClient.GetNameListing(remotePath);
+                return new List<string>(items);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при получении списка каталога: " + ex.Message);
+                return new List<string>();
+            }
+        }
+
+        public async Task DisconnectAsync()
+        {
+            if (_ftpClient.IsConnected)
+                await _ftpClient.Disconnect();
         }
     }
 }

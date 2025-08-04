@@ -7,9 +7,9 @@ namespace PrivilegeAPI.Models
         public int Id { get; set; }
         public string Name { get; set; }
         public int FileId { get; set; }
-        public string Status { get; set; }
-        public string DateAdd { get; set; }
-        public string DateEdit { get; set; }
+        public StatusEnum Status { get; set; }
+        public DateTime DateAdd { get; set; }
+        public DateTime DateEdit { get; set; }
         public File File { get; set; }
     }
 }

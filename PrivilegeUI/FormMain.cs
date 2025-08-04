@@ -2,11 +2,10 @@ using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Privilege.UI.Classes;
-using Privilege.UI.Window.Client.Sub.Issue;
-using Privilege.UI.Window.Client.Sub;
+using PrivilegeAPI.Models;
+using PrivilegeUI.Classes;
 using PrivilegeUI.Models;
-using System;
+using System.Data;
 using System.Drawing;
 using System.IO.Compression;
 using System.Net;
@@ -26,7 +25,51 @@ namespace PrivilegeUI
         private HubConnection _hubConnection;
         private readonly string _apiBaseUrl = "https://localhost:7227";
         private readonly HttpClient _httpClient;
-        private DataGridView _dataGridView;
+        private System.Timers.Timer _connectionCheckTimer;
+        /// <summary>
+        /// Выбранная кнопка
+        /// </summary>
+        private Button _currentBtn;
+        /// <summary>
+        /// Выделеноие кнопки слева
+        /// </summary>
+        private readonly Panel _leftBorderBtn;
+        /// <summary>
+        /// Выбранная форма
+        /// </summary>
+        private Form _currentChildForm;
+
+        /// <summary>
+        /// Основная таблица
+        /// </summary>
+        private DataTable _dt;
+        /// <summary>
+        /// Загруженная таблица
+        /// </summary>
+        private DataTable _dtOld;
+
+        /// <summary>
+        /// Количество ожидающих записей
+        /// </summary>
+        private int _countAdd = 0;
+        /// <summary>
+        /// Количество ожидающих выдачи записей
+        /// </summary>
+        private int _countApply = 0;
+
+        /// <summary>
+        /// Список учреждений
+        /// </summary>
+        private readonly Dictionary<int, string> _officeDictionary = new Dictionary<int, string>();
+
+        /// <summary>
+        /// Сообщение с ошибкой
+        /// </summary>
+        private string _error;
+        /// <summary>
+        /// Текущая таблица "архивная"?
+        /// </summary>
+        private bool _isArchive = false;
 
         public FormMain()
         {
@@ -38,9 +81,9 @@ namespace PrivilegeUI
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
             };
             _httpClient = new HttpClient(handler);
+            _httpClient.BaseAddress = new Uri(_apiBaseUrl);
 
             this.SavingOn();
-            InitializeSignalR();
         }
 
         private void FormMain_Load(object sender, EventArgs e)
@@ -78,6 +121,7 @@ namespace PrivilegeUI
 
             //LoadInfo();
             //timer_refresh.Start();
+            InitializeSignalR();
         }
 
         private void FormMain_FormClosed(object sender, FormClosedEventArgs e)
@@ -95,7 +139,7 @@ namespace PrivilegeUI
             }
             catch (Exception ex)
             {
-                Logger.Log.Warn(ex.Message);
+                MessageBox.Show(ex.Message, @"Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -106,7 +150,13 @@ namespace PrivilegeUI
 
         private void btn_refresh_Click(object sender, EventArgs e)
         {
-            //LoadInfo();
+            LoadApplicationsAsync().ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    MessageBox.Show($"Ошибка при обновлении данных: {task.Exception?.Message}");
+                }
+            });
         }
 
         private void btn_info_Click(object sender, EventArgs e)
@@ -210,23 +260,137 @@ namespace PrivilegeUI
             //CheckUpdate(true);
         }
 
-        private void InitializeDataGridView()
+        private void dGV_SelectionChanged(object sender, EventArgs e)
         {
-            _dataGridView = new DataGridView
+            CellMove();
+        }
+
+        private void dGV_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            DataGridViewRow dgvr = dGV.Rows[e.RowIndex];
+            var cell = dgvr.Cells["status"];
+
+            if (cell?.Value != null && Enum.TryParse(typeof(StatusEnum), cell.Value.ToString(), out object statusObj))
             {
-                Dock = DockStyle.Fill,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                AllowUserToAddRows = false,
-                ReadOnly = true
-            };
-            _dataGridView.Columns.Add("Id", "ID");
-            _dataGridView.Columns.Add("FullName", "Full Name");
-            _dataGridView.Columns.Add("ServiceName", "Service Name");
-            _dataGridView.Columns.Add("ApplicationDate", "Application Date");
-            _dataGridView.Columns.Add("BenefitCategory", "Benefit Category");
-            _dataGridView.Columns.Add("CardNumber", "Card Number");
-            _dataGridView.Columns.Add("ServiceId", "Service ID");
-            this.Controls.Add(_dataGridView);
+                var status = (StatusEnum)statusObj;
+                cell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+                switch (status)
+                {
+                    case StatusEnum.Add:
+                        cell.Style.BackColor = Color.Red;
+                        cell.Style.ForeColor = Color.Gold;
+                        break;
+
+                    case StatusEnum.Delivered:
+                        cell.Style.BackColor = Color.CornflowerBlue;
+                        cell.Style.ForeColor = Color.Black;
+                        break;
+
+                    case StatusEnum.Apply:
+                        cell.Style.BackColor = Color.Yellow;
+                        cell.Style.ForeColor = Color.Black;
+                        break;
+
+                    case StatusEnum.Final:
+                        cell.Style.BackColor = Color.Green;
+                        cell.Style.ForeColor = Color.WhiteSmoke;
+                        break;
+
+                    case StatusEnum.DenialApply:
+                        cell.Style.BackColor = Color.DeepSkyBlue;
+                        cell.Style.ForeColor = Color.Black;
+                        break;
+
+                    default:
+                        cell.Style.BackColor = Color.White;
+                        cell.Style.ForeColor = Color.Black;
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Изменение состояния кнопок после выбора ячейки таблицы
+        /// </summary>
+        private void CellMove()
+        {
+            if (dGV.CurrentRow != null && dGV.Rows[dGV.CurrentRow.Index].Cells["status"].Value != null)
+            {
+                string statusStr = dGV.Rows[dGV.CurrentRow.Index].Cells["status"].Value.ToString();
+                btn_info.Visible = true;
+
+                if (!Enum.TryParse(typeof(StatusEnum), statusStr, out var statusObj))
+                {
+                    HideAllActionButtons();
+                    return;
+                }
+
+                var status = (StatusEnum)statusObj;
+
+                switch (status)
+                {
+                    case StatusEnum.Add:
+                        btn_apply.Visible = true;
+                        btn_denial.Visible = true;
+                        btn_finaly.Visible = false;
+                        btn_finalyPaper.Visible = false;
+                        btn_cancel.Visible = false;
+                        break;
+
+                    case StatusEnum.Delivered:
+                        btn_apply.Visible = false;
+                        btn_denial.Visible = false;
+                        btn_finaly.Visible = true;
+                        btn_finalyPaper.Visible = false;
+                        btn_cancel.Visible = false;
+                        break;
+
+                    case StatusEnum.Apply:
+                        btn_apply.Visible = false;
+                        btn_denial.Visible = false;
+                        btn_finaly.Visible = true;
+                        btn_finalyPaper.Visible = true;
+                        btn_cancel.Visible = true;
+                        break;
+
+                    case StatusEnum.Final:
+                        btn_apply.Visible = false;
+                        btn_denial.Visible = false;
+                        btn_finaly.Visible = false;
+                        btn_finalyPaper.Visible = false;
+                        btn_cancel.Visible = false;
+                        break;
+
+                    case StatusEnum.DenialApply:
+                        btn_apply.Visible = false;
+                        btn_denial.Visible = false;
+                        btn_finaly.Visible = false;
+                        btn_finalyPaper.Visible = false;
+                        btn_cancel.Visible = false;
+                        break;
+
+                    default:
+                        HideAllActionButtons();
+                        break;
+                }
+            }
+            else
+            {
+                HideAllActionButtons();
+            }
+        }
+
+        private void HideAllActionButtons()
+        {
+            btn_info.Visible = false;
+            btn_apply.Visible = false;
+            btn_denial.Visible = false;
+            btn_finaly.Visible = false;
+            btn_finalyPaper.Visible = false;
+            btn_cancel.Visible = false;
         }
 
         private async void InitializeSignalR()
@@ -242,36 +406,119 @@ namespace PrivilegeUI
                 {
                     this.Invoke((Action)(async () =>
                     {
-                        MessageBox.Show(message, "SignalR Notification");
                         await LoadApplicationsAsync();
                     }));
                 });
 
+                _hubConnection.Closed += async (error) =>
+                {
+                    await Task.Delay(5000);
+                    await TryReconnectAsync();
+                };
+
+                _hubConnection.Reconnecting += (error) =>
+                {
+                    return Task.CompletedTask;
+                };
+
+                _hubConnection.Reconnected += (connectionId) =>
+                {
+                    this.Invoke((Action)(async () =>
+                    {
+                        await LoadApplicationsAsync();
+                    }));
+                    return Task.CompletedTask;
+                };
+
                 await _hubConnection.StartAsync();
-                MessageBox.Show("Connected to SignalR hub.");
                 await LoadApplicationsAsync();
+
+                StartConnectionMonitor();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error connecting to SignalR: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                MessageBox.Show($"Ошибка подключения к SignalR: {ex.Message}");
             }
         }
 
-        private async Task SendXmlAsync(string xmlContent)
+        private async Task TryReconnectAsync()
         {
             try
             {
-                var content = new StringContent(xmlContent, Encoding.UTF8, "text/xml");
-                var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/xml-listener", content);
-                response.EnsureSuccessStatusCode();
-                var responseContent = await response.Content.ReadAsStringAsync();
-                MessageBox.Show($"XML sent successfully: {responseContent}");
-                await LoadApplicationsAsync();
+                if (_hubConnection.State == HubConnectionState.Disconnected)
+                {
+                    await _hubConnection.StartAsync();
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error sending XML: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                Console.WriteLine($"Ошибка при попытке переподключения: {ex.Message}");
             }
+        }
+
+        private void StartConnectionMonitor()
+        {
+            _connectionCheckTimer = new System.Timers.Timer(10000); 
+            _connectionCheckTimer.Elapsed += async (sender, e) =>
+            {
+                if (_hubConnection.State == HubConnectionState.Disconnected)
+                {
+                    await TryReconnectAsync();
+                }
+            };
+            _connectionCheckTimer.AutoReset = true;
+            _connectionCheckTimer.Start();
+        }
+
+        private void InitializeDataGridView()
+        {
+            dGV.Columns.Clear();
+            dGV.AutoGenerateColumns = false;
+            dGV.AllowUserToAddRows = false;
+            dGV.ReadOnly = true;
+            dGV.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dGV.CellFormatting += dGV_CellFormatting;
+            dGV.SelectionChanged += dGV_SelectionChanged;
+
+            dGV.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                HeaderText = "ID",
+                DataPropertyName = "Id",
+                Name = "Id",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells
+            });
+
+            dGV.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Имя",
+                DataPropertyName = "Name",
+                Name = "Name",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells
+            });
+
+            dGV.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Статус",
+                DataPropertyName = "Status",
+                Name = "Status",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells
+            });
+
+            dGV.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Дата добавления",
+                DataPropertyName = "DateAdd",
+                Name = "DateAdd",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells
+            });
+
+            dGV.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Дата изменения",
+                DataPropertyName = "DateEdit",
+                Name = "DateEdit",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells
+            });
         }
 
         private async Task LoadApplicationsAsync()
@@ -280,13 +527,25 @@ namespace PrivilegeUI
             {
                 var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/applications");
                 response.EnsureSuccessStatusCode();
-                var content = await response.Content.ReadAsStringAsync();
-                var applications = JsonSerializer.Deserialize<Application[]>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                _dataGridView.Rows.Clear();
+                var content = await response.Content.ReadAsStringAsync();
+                var applications = JsonSerializer.Deserialize<Application[]>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                dGV.Rows.Clear();
+
                 foreach (var app in applications)
                 {
-                    _dataGridView.Rows.Add(app.Id, app.FullName, app.ServiceName, app.ApplicationDate.ToString("dd.MM.yyyy"), app.BenefitCategory, app.CardNumber, app.ServiceId);
+                    dGV.Rows.Add(
+                        app.Id,
+                        app.Name,
+                        app.Status,
+                        app.DateAdd,
+                        app.DateEdit,
+                        app.FileId
+                    );
                 }
             }
             catch (Exception ex)
@@ -295,10 +554,64 @@ namespace PrivilegeUI
             }
         }
 
-        private async void SendXmlButton_Click(object sender, EventArgs e)
+        private void ActivateButton(object senderBtn)
         {
-            var xmlContent = "";
-            await SendXmlAsync(xmlContent);
+            timer_refresh.Stop();
+            DisableButton();
+
+            _currentBtn = (Button)senderBtn;
+            _currentBtn.BackColor = Color.FromArgb(0, 36, 63);
+            _leftBorderBtn.BackColor = Color.Gainsboro;
+            _leftBorderBtn.Location = new Point(0, _currentBtn.Location.Y);
+            _leftBorderBtn.Visible = true;
+            _leftBorderBtn.BringToFront();
+
+            pB_CurrentChildForm.BackgroundImage = _currentBtn.Image;
+            lblTitleClildForm.Text = _currentBtn.Tag.ToString();
+        }
+
+        private void DisableButton()
+        {
+            if (_currentBtn != null)
+            {
+                _currentBtn.BackColor = Color.FromArgb(60, 91, 116);
+                _currentBtn.ForeColor = Color.Gainsboro;
+            }
+        }
+
+        public void ResetButton()
+        {
+            DisableButton();
+            if (_currentChildForm?.DialogResult == DialogResult.OK)
+                LoadApplicationsAsync().ContinueWith(task =>
+                {
+                    if (task.IsFaulted)
+                    {
+                        MessageBox.Show($"Ошибка при обновлении данных: {task.Exception?.Message}");
+                    }
+                });
+            _currentChildForm?.Close();
+            _currentChildForm = null;
+            _leftBorderBtn.Visible = false;
+            pB_CurrentChildForm.BackgroundImage = _isArchive ? Properties.Resources.winrar_white_40 : Properties.Resources.home_white_96;
+            lblTitleClildForm.Text = _isArchive ? @"Архив" : @"Главный экран";
+            timer_refresh.Start();
+        }
+
+        private void OpenChildForm(Form childForm)
+        {
+            _currentChildForm?.Close();
+
+            _currentChildForm = childForm;
+            childForm.TopLevel = false;
+            childForm.FormBorderStyle = FormBorderStyle.None;
+            childForm.Dock = DockStyle.Fill;
+            panelDesktop.Controls.Add(childForm);
+            panelDesktop.Tag = childForm;
+            childForm.BringToFront();
+            childForm.Show();
+            if (childForm.IsDisposed)
+                DisableButton();
         }
 
         protected override async void OnFormClosing(FormClosingEventArgs e)

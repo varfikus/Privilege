@@ -1,4 +1,4 @@
-﻿using Privilege.UI.Classes;
+﻿using PrivilegeUI.Classes;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -6,10 +6,10 @@ using System.IO;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
-using Privilege.UI.Classes.Signature;
+using PrivilegeUI.Classes.Signature;
 using MySql.Data.MySqlClient;
 
-namespace Privilege.UI.Window.Client.Sub.Issue
+namespace PrivilegeUI.Sub.Issue
 {
     public partial class FormAnsPos : Form
     {

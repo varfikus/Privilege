@@ -1,4 +1,4 @@
-using Privilege.UI.Window.Client;
+using PrivilegeUI;
 
 namespace Privilege.UI
 {

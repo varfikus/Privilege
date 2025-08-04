@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace Privilege.UI.MyControls
+namespace PrivilegeUI.MyControls
 {
     public static class TextBoxWatermarkExtensionMethod
     {

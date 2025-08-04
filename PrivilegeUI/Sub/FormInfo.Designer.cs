@@ -1,4 +1,4 @@
-﻿namespace Privilege.UI.Window.Client.Sub
+﻿namespace PrivilegeUI.Sub
 {
     partial class FormInfo
     {
@@ -117,7 +117,7 @@
             // 
             // btnClose
             // 
-            this.btnClose.BackgroundImage = global::Privilege.UI.Properties.Resources.go_back_white_96;
+            this.btnClose.BackgroundImage = global::PrivilegeUI.Properties.Resources.go_back_white_96;
             this.btnClose.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.btnClose.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnClose.FlatAppearance.BorderSize = 0;

@@ -13,15 +13,17 @@ namespace PrivilegeAPI.Services
     {
         private readonly HttpListener _listener;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly FtpService _ftpService;
         private readonly IHubContext<XmlProcessingHub> _hubContext;
         private readonly ILogger<XmlListenerService> _logger;
         private readonly string _url = "http://+:5059/";
         private bool _isDisposing;
 
-        public XmlListenerService(IServiceScopeFactory scopeFactory, IHubContext<XmlProcessingHub> hubContext, ILogger<XmlListenerService> logger)
+        public XmlListenerService(IServiceScopeFactory scopeFactory, FtpService ftpService, IHubContext<XmlProcessingHub> hubContext, ILogger<XmlListenerService> logger)
         {
             _listener = new HttpListener();
             _scopeFactory = scopeFactory;
+            _ftpService = ftpService;
             _hubContext = hubContext;
             _logger = logger;
             _isDisposing = false;
@@ -107,7 +109,6 @@ namespace PrivilegeAPI.Services
                     using var scope = _scopeFactory.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-                    // Создаем запись о файле (с временным именем и путём)
                     string fileName = $"Application_{DateTime.Now:yyyyMMddHHmmss}.xml";
                     string virtualPath = $"Applications/{fileName}";
 
@@ -118,7 +119,7 @@ namespace PrivilegeAPI.Services
                     };
 
                     dbContext.Files.Add(file);
-                    await dbContext.SaveChangesAsync(cancellationToken); // получаем file.Id
+                    await dbContext.SaveChangesAsync(cancellationToken); 
 
                     var application = ParseXml(xmlContent, file);
                     application.FileId = file.Id;
@@ -126,11 +127,7 @@ namespace PrivilegeAPI.Services
                     dbContext.Applications.Add(application);
                     await dbContext.SaveChangesAsync(cancellationToken);
 
-                    // Сохраняем XML на FTP
-                    await FtpService.SaveFileFtpAsync(
-                        XDocument.Parse($"<root>{xmlContent}</root>"),
-                        virtualPath
-                    );
+                    await _ftpService.SaveFileAsync(virtualPath, xmlContent);
 
                     await _hubContext.Clients.All.SendAsync(
                         "ReceiveMessage",
@@ -138,7 +135,6 @@ namespace PrivilegeAPI.Services
                         cancellationToken
                     );
 
-                    // Ответ клиенту
                     var response = context.Response;
                     var responseString = $"{{\"Message\":\"XML processed and saved to database.\",\"ApplicationId\":{application.Id}}}";
                     var buffer = Encoding.UTF8.GetBytes(responseString);
@@ -203,13 +199,6 @@ namespace PrivilegeAPI.Services
                 if (string.IsNullOrWhiteSpace(fullName))
                     throw new Exception("FullName is required");
 
-                string benefitCategory = container
-                    .Element(ns + "content")
-                    ?.Element(ns + "lgota_text")
-                    ?.Value ?? "";
-                if (string.IsNullOrWhiteSpace(benefitCategory))
-                    throw new Exception("BenefitCategory is required");
-
                 string dateString = container.Element(ns + "dateblank")?.Value;
                 if (!DateTime.TryParse(dateString, out DateTime applicationDate))
                 {
@@ -219,9 +208,9 @@ namespace PrivilegeAPI.Services
                 return new Application
                 {
                     Name = fullName,
-                    Status = benefitCategory,
-                    DateAdd = applicationDate.ToString("yyyy-MM-dd"),
-                    DateEdit = DateTime.Now.ToString("yyyy-MM-dd"),
+                    Status = StatusEnum.Delivered,
+                    DateAdd = applicationDate,
+                    DateEdit = DateTime.Now,
                     File = file
                 };
             }
