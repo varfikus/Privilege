@@ -8,6 +8,8 @@ namespace PrivilegeAPI.Context
     {
         public DbSet<Application> Applications { get; set; }
         public DbSet<Models.File> Files { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<UserToken> UserTokens { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

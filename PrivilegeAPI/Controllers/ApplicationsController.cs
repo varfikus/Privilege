@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PrivilegeAPI.Context;
 using PrivilegeAPI.Dto;
 using PrivilegeAPI.Hubs;
+using PrivilegeAPI.Interfaces;
 using PrivilegeAPI.Models;
+using PrivilegeAPI.Result;
 using System.Data.Entity;
 using System.Net;
 using System.Text;
@@ -20,79 +23,64 @@ namespace PrivilegeAPI.Controllers
     public class ApplicationsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IApplicationService _applicationService;
         private readonly IHubContext<XmlProcessingHub> _hubContext;
 
-        public ApplicationsController(ApplicationDbContext context, IHubContext<XmlProcessingHub> hubContext)
+        public ApplicationsController(ApplicationDbContext context, IHubContext<XmlProcessingHub> hubContext, IApplicationService applicationService)
         {
             _context = context;
             _hubContext = hubContext;
+            _applicationService = applicationService;
         }
 
-        // GET: api/Applications
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Application>>> GetApplications()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CollectionResult<ApplicationDto>>> GetApplications()
         {
-            try
-            {
-                return _context.Applications.ToList();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
+            var result = await _applicationService.GetApplicationsAsync();
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
         }
 
-        // GET: api/Applications/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Application>> GetApplication(int id)
+        [HttpGet("id/{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<BaseResult<ApplicationDto>>> GetApplicationById(int id)
         {
-            var application = await _context.Applications.FindAsync(id);
+            var result = await _applicationService.GetByIdAsync(id);
+            if (!result.IsSuccess)
+                return BadRequest(result);
 
-            if (application == null)
-                return NotFound();
-
-            return application;
+            return Ok(result);
         }
 
-        // POST: api/Applications
         [HttpPost]
-        public async Task<ActionResult<Application>> CreateApplication(Application application)
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<BaseResult<ApplicationDto>>> CreateApplication([FromBody] ApplicationDto applicationDto)
         {
-            _context.Applications.Add(application);
-            await _context.SaveChangesAsync();
+            var result = await _applicationService.CreateApplicationAsync(applicationDto);
+            if (!result.IsSuccess)
+                return BadRequest(result);
 
-            return CreatedAtAction(nameof(GetApplication), new { id = application.Id }, application);
+            return Ok(result);
         }
 
-        // PUT: api/Applications/update
         [HttpPut("update")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateApplication([FromBody] ApplicationDto updatedApplication)
         {
-            try
-            {
-                var existingApplication = _context.Applications.FirstOrDefault(a => a.Id == updatedApplication.Id);
-                if (updatedApplication == null || !ApplicationExists(updatedApplication.Id))
-                {
-                    return NotFound();
-                }
+            var result = await _applicationService.UpdateApplicationAsync(updatedApplication);
+            if (!result.IsSuccess)
+                return BadRequest(result);
 
-                existingApplication.Status = (StatusEnum)updatedApplication.Status;
-                existingApplication.DateEdit = DateTime.Now;
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", $"Application {updatedApplication.Id} updated");
 
-                await _context.SaveChangesAsync();
-                await _hubContext.Clients.All.SendAsync("ReceiveMessage", $"Application {updatedApplication.Id} updated");
-
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
-            }
-        }
-
-        private bool ApplicationExists(int id)
-        {
-            return _context.Applications.Any(e => e.Id == id);
+            return Ok(result);
         }
     }
 }

@@ -43,8 +43,6 @@ namespace PrivilegeAPI.Services
                 await _ftpClient.Connect();
         }
 
-        
-
         public async Task<bool> SaveFileAsync(string remotePath, string content)
         {
             try

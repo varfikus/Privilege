@@ -43,8 +43,6 @@ namespace PrivilegeUI
             btn_archive = new Button();
             btn_settings = new Button();
             btn_finaly = new Button();
-            btn_denial = new Button();
-            btn_apply = new Button();
             btn_info = new Button();
             btn_refresh = new Button();
             panelShadow = new Panel();
@@ -158,8 +156,6 @@ namespace PrivilegeUI
             panelMenu.Controls.Add(btn_settings);
             panelMenu.Controls.Add(btn_exit);
             panelMenu.Controls.Add(btn_finaly);
-            panelMenu.Controls.Add(btn_denial);
-            panelMenu.Controls.Add(btn_apply);
             panelMenu.Controls.Add(btn_info);
             panelMenu.Controls.Add(btn_refresh);
             panelMenu.Controls.Add(panelLogo);
@@ -180,7 +176,7 @@ namespace PrivilegeUI
             btn_cancel.ForeColor = Color.Gainsboro;
             btn_cancel.Image = Properties.Resources.cancel_subscription_white_40;
             btn_cancel.ImageAlign = ContentAlignment.MiddleLeft;
-            btn_cancel.Location = new Point(0, 539);
+            btn_cancel.Location = new Point(0, 401);
             btn_cancel.Margin = new Padding(4, 3, 4, 3);
             btn_cancel.Name = "btn_cancel";
             btn_cancel.Padding = new Padding(12, 0, 0, 0);
@@ -201,7 +197,7 @@ namespace PrivilegeUI
             btn_finalyPaper.ForeColor = Color.Gainsboro;
             btn_finalyPaper.Image = Properties.Resources.submit_document_white_40;
             btn_finalyPaper.ImageAlign = ContentAlignment.MiddleLeft;
-            btn_finalyPaper.Location = new Point(0, 470);
+            btn_finalyPaper.Location = new Point(0, 332);
             btn_finalyPaper.Margin = new Padding(4, 3, 4, 3);
             btn_finalyPaper.Name = "btn_finalyPaper";
             btn_finalyPaper.Padding = new Padding(12, 0, 0, 0);
@@ -264,7 +260,7 @@ namespace PrivilegeUI
             btn_finaly.ForeColor = Color.Gainsboro;
             btn_finaly.Image = Properties.Resources.ok_white_40;
             btn_finaly.ImageAlign = ContentAlignment.MiddleLeft;
-            btn_finaly.Location = new Point(0, 401);
+            btn_finaly.Location = new Point(0, 263);
             btn_finaly.Margin = new Padding(4, 3, 4, 3);
             btn_finaly.Name = "btn_finaly";
             btn_finaly.Padding = new Padding(12, 0, 0, 0);
@@ -274,48 +270,6 @@ namespace PrivilegeUI
             btn_finaly.Text = "Выдать";
             btn_finaly.UseVisualStyleBackColor = true;
             btn_finaly.Click += btn_finaly_Click;
-            // 
-            // btn_denial
-            // 
-            btn_denial.Cursor = Cursors.Hand;
-            btn_denial.Dock = DockStyle.Top;
-            btn_denial.FlatAppearance.BorderSize = 0;
-            btn_denial.FlatStyle = FlatStyle.Flat;
-            btn_denial.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
-            btn_denial.ForeColor = Color.Gainsboro;
-            btn_denial.Image = Properties.Resources.clipboard_white_40;
-            btn_denial.ImageAlign = ContentAlignment.MiddleLeft;
-            btn_denial.Location = new Point(0, 332);
-            btn_denial.Margin = new Padding(4, 3, 4, 3);
-            btn_denial.Name = "btn_denial";
-            btn_denial.Padding = new Padding(12, 0, 0, 0);
-            btn_denial.Size = new Size(257, 69);
-            btn_denial.TabIndex = 3;
-            btn_denial.Tag = "Отказать";
-            btn_denial.Text = "Отказать";
-            btn_denial.UseVisualStyleBackColor = true;
-            btn_denial.Click += btn_denial_Click;
-            // 
-            // btn_apply
-            // 
-            btn_apply.Cursor = Cursors.Hand;
-            btn_apply.Dock = DockStyle.Top;
-            btn_apply.FlatAppearance.BorderSize = 0;
-            btn_apply.FlatStyle = FlatStyle.Flat;
-            btn_apply.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
-            btn_apply.ForeColor = Color.Gainsboro;
-            btn_apply.Image = Properties.Resources.add_to_clipboard_white_40;
-            btn_apply.ImageAlign = ContentAlignment.MiddleLeft;
-            btn_apply.Location = new Point(0, 263);
-            btn_apply.Margin = new Padding(4, 3, 4, 3);
-            btn_apply.Name = "btn_apply";
-            btn_apply.Padding = new Padding(12, 0, 0, 0);
-            btn_apply.Size = new Size(257, 69);
-            btn_apply.TabIndex = 2;
-            btn_apply.Tag = "Принять в работу";
-            btn_apply.Text = "Принять \r\nв работу";
-            btn_apply.UseVisualStyleBackColor = true;
-            btn_apply.Click += btn_apply_Click;
             // 
             // btn_info
             // 
@@ -576,8 +530,6 @@ namespace PrivilegeUI
         private System.Windows.Forms.Button btn_settings;
         private System.Windows.Forms.Button btn_exit;
         private System.Windows.Forms.Button btn_finaly;
-        private System.Windows.Forms.Button btn_denial;
-        private System.Windows.Forms.Button btn_apply;
         private System.Windows.Forms.Button btn_info;
         private System.Windows.Forms.Button btn_refresh;
         private System.Windows.Forms.Panel panelLogo;

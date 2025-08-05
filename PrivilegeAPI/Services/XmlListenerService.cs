@@ -37,7 +37,7 @@ namespace PrivilegeAPI.Services
                 _listener.Prefixes.Add(_url);
                 _logger.LogInformation("Starting HttpListener on {Url}", _url);
                 _listener.Start();
-                _logger.LogInformation("HttpListener successfully started on {Url}", _url);
+                _logger.LogInformation("HttpListener IsSuccessfully started on {Url}", _url);
 
                 while (!stoppingToken.IsCancellationRequested && !_isDisposing)
                 {

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Configuration;
+﻿using System.Configuration;
 using System.Data;
-using System.Drawing;
-using System.Windows.Forms;
 
 namespace PrivilegeUI.Classes
 {

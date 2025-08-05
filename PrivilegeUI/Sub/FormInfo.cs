@@ -1,15 +1,14 @@
-﻿using Microsoft.AspNetCore.Http;
-using PrivilegeAPI.Dto;
-using PrivilegeAPI.Models;
+﻿using FluentFTP.Helpers;
+using PrivilegeAPI;
+using PrivilegeAPI.Result;
 using PrivilegeAPI.Services;
-using System;
+using PrivilegeUI.Classes;
+using PrivilegeUI.Models;
 using System.ComponentModel.DataAnnotations;
-using System.Data;
-using System.Drawing;
-using System.IO;
 using System.Reflection;
 using System.Text.Json;
-using System.Windows.Forms;
+using System.Xml.Serialization;
+using static PrivilegeUI.Models.FullApplication;
 using Application = PrivilegeAPI.Models.Application;
 using FtpSettings = PrivilegeAPI.Services.FtpSettings;
 
@@ -19,21 +18,22 @@ namespace PrivilegeUI.Sub
     {
         #region Fields
 
-        private readonly HttpClient _apiClient;
+        private readonly MyHttpClient _apiClient;
         private readonly int _orderId;
         private FtpSettings ftpSettings;
         private FtpService ftpContext;
-        
+        private Application _app;
+        private FormMain _parentForm;
+
         #endregion
 
 
         #region Constructor
 
-        public FormInfo(HttpClient apiClient, int orderId)
+        public FormInfo(MyHttpClient apiClient, Application app, FormMain parentForm)
         {
             InitializeComponent();
             _apiClient = apiClient;
-            _orderId = orderId;
             ftpSettings = new FtpSettings
             {
                 Server = Properties.Settings.Default.ServerFTP,
@@ -42,6 +42,9 @@ namespace PrivilegeUI.Sub
                 Port = Properties.Settings.Default.PortFTP
             };
             ftpContext = new FtpService(ftpSettings);
+            this._app = app;
+            _orderId = _app.Id;
+            _parentForm = parentForm;
         }
 
         #endregion
@@ -65,32 +68,22 @@ namespace PrivilegeUI.Sub
                     return;
                 }
 
-                var response = await _apiClient.GetAsync($"api/application/id/{_orderId}");
-                if (!response.IsSuccessStatusCode)
+                var fullApp = await LoadHtmlxFromFtpAsync(_app.File.Path);
+                if (fullApp == null)
                 {
-                    MessageBox.Show("Ошибка при получении данных с сервера.");
+                    MessageBox.Show("Не удалось загрузить данные заявки.");
                     Close();
                     return;
                 }
 
-                var json = await response.Content.ReadAsStringAsync();
-                var app = JsonSerializer.Deserialize<Application>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                if (app == null)
-                {
-                    MessageBox.Show("Заявка не найдена.");
-                    Close();
-                    return;
-                }
-
-                tB_service.Text = app.Name;
-                tB_npp.Text = app.Id.ToString();
-                tB_status.Text = GetEnumDisplayName(app.Status);
-                tB_dateAdd.Text = app.DateAdd.ToShortDateString();
-                tB_dateEnd.Text = app.DateEdit.ToShortDateString();
+                tB_service.Text = fullApp.Body2.Servinfo.Nameservice;
+                tB_serviceId.Text = fullApp.Body2.Servinfo.Idservice.ToString();
+                tB_npp.Text = _app.Id.ToString();
+                tB_fio.Text = fullApp.Body2.Container.Topheader.Tophead.PersData.Fam + " " + fullApp.Body2.Container.Topheader.Tophead.PersData.Im + " " + fullApp.Body2.Container.Topheader.Tophead.PersData.Ot;
+                tB_address.Text = fullApp.Body2.Container.Topheader.Tophead.AdressProj.Row.Raion + ", " + fullApp.Body2.Container.Topheader.Tophead.AdressProj.Row.Ulica + ", " + fullApp.Body2.Container.Topheader.Tophead.AdressProj.Row.Dom;
+                tB_status.Text = EnumHelper.GetEnumDisplayName(_app.Status);
+                tB_dateAdd.Text = fullApp.Body2.Container.Dateblank.ToShortDateString();
+                tB_dateEnd.Text = _app.DateEdit.ToShortDateString();
             }
             catch (Exception ex)
             {
@@ -102,35 +95,11 @@ namespace PrivilegeUI.Sub
         {
             try
             {
-                await ftpContext.ConnectAsync();
-
-                string remoteFilePath = "/test.txt";
-                string localFilePath = Path.Combine(Path.GetTempPath(), Path.GetFileName(remoteFilePath));
-
-                if (await ftpContext.FileExistsAsync(remoteFilePath))
-                {
-                    await ftpContext.DownloadFileAsync(remoteFilePath, localFilePath);
-
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = localFilePath,
-                        UseShellExecute = true
-                    });
-
-                    MessageBox.Show("Файл успешно загружен и открыт.");
-                }
-                else
-                {
-                    MessageBox.Show("Файл не найден на сервере.");
-                }
+                await DownloadAndOpenFile(_app.File.Path, false);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при загрузке файла: {ex.Message}");
-            }
-            finally
-            {
-                await ftpContext.DisconnectAsync();
             }
         }
 
@@ -138,70 +107,56 @@ namespace PrivilegeUI.Sub
         {
             try
             {
-                await ftpContext.ConnectAsync();
-
-                string remotePath = "/test.txt";
-                string tempPath = Path.Combine(Path.GetTempPath(), Path.GetFileName(remotePath));
-
-                using (var stream = await ftpContext.OpenReadAsync(remotePath))
-                using (var fileStream = System.IO.File.Create(tempPath))
-                {
-                    await stream.CopyToAsync(fileStream);
-                }
-
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = tempPath,
-                    UseShellExecute = true
-                });
+                await DownloadAndOpenFile(_app.File.Path, true);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при открытии файла: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            finally
-            {
-                await ftpContext.DisconnectAsync();
-            }
         }
 
         private async void btn_fileApplyDownload_Click(object sender, EventArgs e)
-        {
-            await DownloadAndOpenFile("apply", $"doc{_orderId}.xml", false);
+        {   
+            await DownloadAndOpenFile(_app.File.Path, false);
         }
 
         private async void btn_fileApplyOpen_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile("apply", $"doc{_orderId}.xml", true);
+            await DownloadAndOpenFile(_app.File.Path, true);
         }
 
         private async void btn_fileArrivedDownload_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile("arrived", $"doc{_orderId}.xml", false);
+            await DownloadAndOpenFile(_app.File.Path, false);
         }
 
         private async void btn_fileArrivedOpen_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile("arrived", $"doc{_orderId}.xml", true);
+            await DownloadAndOpenFile(_app.File.Path, true);
         }
 
         private async void btn_fileFinalyDownload_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile("final", $"doc{_orderId}.xml", false);
+            await DownloadAndOpenFile(_app.File.Path, false);
         }
 
         private async void btn_fileFinalyOpen_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile("final", $"doc{_orderId}.xml", true);
+            await DownloadAndOpenFile(_app.File.Path, true);
         }
 
-        private async Task DownloadAndOpenFile(string category, string fileName, bool openAfterDownload)
+        private async Task DownloadAndOpenFile(string fileName, bool openAfterDownload)
         {
             try
             {
-                string localDir = Path.Combine(Path.GetTempPath(), category);
-                Directory.CreateDirectory(localDir);
-                string localPath = Path.Combine(localDir, fileName);
+                string localBaseDir = Path.GetTempPath();
+                string localPath = Path.Combine(localBaseDir, fileName);
+                string localDir = Path.GetDirectoryName(localPath);
+
+                if (!Directory.Exists(localDir))
+                {
+                    Directory.CreateDirectory(localDir);
+                }
 
                 if (System.IO.File.Exists(localPath))
                 {
@@ -219,7 +174,7 @@ namespace PrivilegeUI.Sub
 
                 await ftpContext.ConnectAsync();
 
-                string remotePath = $"{category}/{fileName}";
+                string remotePath = fileName;
 
                 if (await ftpContext.FileExistsAsync(remotePath))
                 {
@@ -254,19 +209,33 @@ namespace PrivilegeUI.Sub
             }
         }
 
-        public static string GetEnumDisplayName(Enum value)
-        {
-            return value.GetType()
-                        .GetMember(value.ToString())
-                        .FirstOrDefault()?
-                        .GetCustomAttribute<DisplayAttribute>()?
-                        .Name ?? value.ToString();
-        }
-
         private void btnClose_Click(object sender, EventArgs e)
         {
-            this.Close();
+            _parentForm?.ResetButton();
+            Close();
         }
         #endregion
+
+        public async Task<Htmlx> LoadHtmlxFromFtpAsync(string remoteFtpPath)
+        {
+            try
+            {
+                string tempPath = Path.GetTempFileName();
+
+                await ftpContext.DownloadFileAsync(remoteFtpPath, tempPath);
+
+                XmlSerializer serializer = new XmlSerializer(typeof(Htmlx));
+                using (FileStream fs = new FileStream(tempPath, FileMode.Open))
+                {
+                    var htmlx = (Htmlx)serializer.Deserialize(fs);
+                    return htmlx;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при загрузке/десериализации XML: " + ex.Message);
+                return null;
+            }
+        }
     }
 }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-
-namespace PrivilegeUI.MyControls
+﻿namespace PrivilegeUI.MyControls
 {
     public partial class TabControlWithoutHeader : TabControl
     {

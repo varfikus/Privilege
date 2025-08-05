@@ -1,22 +1,17 @@
 using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using PrivilegeAPI;
+using PrivilegeAPI.Dto;
 using PrivilegeAPI.Models;
+using PrivilegeAPI.Result;
 using PrivilegeUI.Classes;
 using PrivilegeUI.Models;
+using PrivilegeUI.Sub;
 using System.Data;
-using System.Drawing;
-using System.IO.Compression;
-using System.Net;
-using System.Text;
+using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Windows.Forms.Design;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrayNotify;
-using Application = PrivilegeUI.Models.Application;
+using Application = PrivilegeAPI.Models.Application;
 using HubConnection = Microsoft.AspNetCore.SignalR.Client.HubConnection;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace PrivilegeUI
 {
@@ -33,45 +28,21 @@ namespace PrivilegeUI
         /// <summary>
         /// Выделеноие кнопки слева
         /// </summary>
-        private readonly Panel _leftBorderBtn;
+        private readonly Panel _leftBorderBtn = new Panel();
         /// <summary>
         /// Выбранная форма
         /// </summary>
         private Form _currentChildForm;
-
-        /// <summary>
-        /// Основная таблица
-        /// </summary>
-        private DataTable _dt;
-        /// <summary>
-        /// Загруженная таблица
-        /// </summary>
-        private DataTable _dtOld;
-
-        /// <summary>
-        /// Количество ожидающих записей
-        /// </summary>
-        private int _countAdd = 0;
-        /// <summary>
-        /// Количество ожидающих выдачи записей
-        /// </summary>
-        private int _countApply = 0;
-
-        /// <summary>
-        /// Список учреждений
-        /// </summary>
-        private readonly Dictionary<int, string> _officeDictionary = new Dictionary<int, string>();
-
-        /// <summary>
-        /// Сообщение с ошибкой
-        /// </summary>
-        private string _error;
         /// <summary>
         /// Текущая таблица "архивная"?
         /// </summary>
         private bool _isArchive = false;
+        private MyHttpClient _apiClient;
+        private readonly int _userId;
 
-        public FormMain()
+        private List<Application> _applications;
+
+        public FormMain(int userId, MyHttpClient apiClient)
         {
             InitializeComponent();
             InitializeDataGridView();
@@ -83,29 +54,17 @@ namespace PrivilegeUI
             _httpClient = new HttpClient(handler);
             _httpClient.BaseAddress = new Uri(_apiBaseUrl);
 
+            _apiClient = apiClient;
+            _userId = userId;
+            panelMenu.Controls.Add(_leftBorderBtn);
             this.SavingOn();
         }
 
         private void FormMain_Load(object sender, EventArgs e)
         {
-            //string[] ver = Application.ProductVersion.Split('.');
-            //Text += @" v" + ver[0] + @"." + ver[1];
-            //if (ver[2] != 0.ToString())
-            //{
-            //    Text += @"." + ver[2];
-            //    if (ver[3] != 0.ToString())
-            //        Text += @"." + ver[3];
-            //}
-            //else
-            //{
-            //    if (ver[3] != 0.ToString())
-            //        Text += @"." + ver[2] + @"." + ver[3];
-            //}
-
-            //Text += @"  [" + UserInfo.Login + @"]";
         }
 
-        private void FormMain_Shown(object sender, EventArgs e)
+        private async void FormMain_Shown(object sender, EventArgs e)
         {
             //обновление
             //CheckUpdate(false);
@@ -121,7 +80,43 @@ namespace PrivilegeUI
 
             //LoadInfo();
             //timer_refresh.Start();
+
+            var result = await _apiClient.GetAsync<BaseResult<UserDto>>($"api/users/id/{_userId}");
+
+            if (result == null)
+            {
+                MessageBox.Show("Не удалось получить ответ от сервера.");
+                Close();
+                return;
+            }
+
+            if (!result.IsSuccess || result.Data == null)
+            {
+                MessageBox.Show($"Ошибка загрузки пользователя: {result.ErrorMessage ?? "Неизвестная ошибка"}");
+                Close();
+                return;
+            }
+
+            UserInfo.CurrentUser = new UserDto
+            {
+                Id = result.Data.Id,
+                Login = result.Data.Login,
+                Name = result.Data.Name
+            };
+
             InitializeSignalR();
+        }
+
+        private void LoadApplications()
+        {
+            InitializeDataGridView();
+            LoadApplicationsAsync().ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    MessageBox.Show($"Ошибка при загрузке заявок: {task.Exception?.Message}");
+                }
+            });
         }
 
         private void FormMain_FormClosed(object sender, FormClosedEventArgs e)
@@ -161,12 +156,28 @@ namespace PrivilegeUI
 
         private void btn_info_Click(object sender, EventArgs e)
         {
-            if (dGV.CurrentRow != null)
+            if (dGV.CurrentRow == null)
             {
-                //int.TryParse(dGV.CurrentRow.Cells["id"].Value.ToString(), out int num);
-                //ActivateButton(sender);
-                //OpenChildForm(new FormInfo(this, num));
+                MessageBox.Show("Выберите строку для отображения информации.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
+
+            if (!int.TryParse(dGV.CurrentRow.Cells["id"].Value?.ToString(), out int id))
+            {
+                MessageBox.Show("Не удалось определить ID заявки.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var app = _applications?.FirstOrDefault(a => a.Id == id);
+
+            if (app == null)
+            {
+                MessageBox.Show("Заявка не найдена в списке.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ActivateButton(sender);
+            OpenChildForm(new FormInfo(_apiClient, app, this));
         }
 
         private void btn_apply_Click(object sender, EventArgs e)
@@ -260,17 +271,12 @@ namespace PrivilegeUI
             //CheckUpdate(true);
         }
 
-        private void dGV_SelectionChanged(object sender, EventArgs e)
-        {
-            CellMove();
-        }
-
         private void dGV_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
 
             DataGridViewRow dgvr = dGV.Rows[e.RowIndex];
-            var cell = dgvr.Cells["status"];
+            var cell = dgvr.Cells["StatusEnum"];
 
             if (cell?.Value != null && Enum.TryParse(typeof(StatusEnum), cell.Value.ToString(), out object statusObj))
             {
@@ -312,87 +318,6 @@ namespace PrivilegeUI
             }
         }
 
-        /// <summary>
-        /// Изменение состояния кнопок после выбора ячейки таблицы
-        /// </summary>
-        private void CellMove()
-        {
-            if (dGV.CurrentRow != null && dGV.Rows[dGV.CurrentRow.Index].Cells["status"].Value != null)
-            {
-                string statusStr = dGV.Rows[dGV.CurrentRow.Index].Cells["status"].Value.ToString();
-                btn_info.Visible = true;
-
-                if (!Enum.TryParse(typeof(StatusEnum), statusStr, out var statusObj))
-                {
-                    HideAllActionButtons();
-                    return;
-                }
-
-                var status = (StatusEnum)statusObj;
-
-                switch (status)
-                {
-                    case StatusEnum.Add:
-                        btn_apply.Visible = true;
-                        btn_denial.Visible = true;
-                        btn_finaly.Visible = false;
-                        btn_finalyPaper.Visible = false;
-                        btn_cancel.Visible = false;
-                        break;
-
-                    case StatusEnum.Delivered:
-                        btn_apply.Visible = false;
-                        btn_denial.Visible = false;
-                        btn_finaly.Visible = true;
-                        btn_finalyPaper.Visible = false;
-                        btn_cancel.Visible = false;
-                        break;
-
-                    case StatusEnum.Apply:
-                        btn_apply.Visible = false;
-                        btn_denial.Visible = false;
-                        btn_finaly.Visible = true;
-                        btn_finalyPaper.Visible = true;
-                        btn_cancel.Visible = true;
-                        break;
-
-                    case StatusEnum.Final:
-                        btn_apply.Visible = false;
-                        btn_denial.Visible = false;
-                        btn_finaly.Visible = false;
-                        btn_finalyPaper.Visible = false;
-                        btn_cancel.Visible = false;
-                        break;
-
-                    case StatusEnum.DenialApply:
-                        btn_apply.Visible = false;
-                        btn_denial.Visible = false;
-                        btn_finaly.Visible = false;
-                        btn_finalyPaper.Visible = false;
-                        btn_cancel.Visible = false;
-                        break;
-
-                    default:
-                        HideAllActionButtons();
-                        break;
-                }
-            }
-            else
-            {
-                HideAllActionButtons();
-            }
-        }
-
-        private void HideAllActionButtons()
-        {
-            btn_info.Visible = false;
-            btn_apply.Visible = false;
-            btn_denial.Visible = false;
-            btn_finaly.Visible = false;
-            btn_finalyPaper.Visible = false;
-            btn_cancel.Visible = false;
-        }
-
         private async void InitializeSignalR()
         {
             try
@@ -425,13 +350,13 @@ namespace PrivilegeUI
                 {
                     this.Invoke((Action)(async () =>
                     {
-                        await LoadApplicationsAsync();
+                        LoadApplications();
                     }));
                     return Task.CompletedTask;
                 };
 
                 await _hubConnection.StartAsync();
-                await LoadApplicationsAsync();
+                LoadApplications();
 
                 StartConnectionMonitor();
             }
@@ -458,7 +383,7 @@ namespace PrivilegeUI
 
         private void StartConnectionMonitor()
         {
-            _connectionCheckTimer = new System.Timers.Timer(10000); 
+            _connectionCheckTimer = new System.Timers.Timer(10000);
             _connectionCheckTimer.Elapsed += async (sender, e) =>
             {
                 if (_hubConnection.State == HubConnectionState.Disconnected)
@@ -478,7 +403,7 @@ namespace PrivilegeUI
             dGV.ReadOnly = true;
             dGV.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dGV.CellFormatting += dGV_CellFormatting;
-            dGV.SelectionChanged += dGV_SelectionChanged;
+            panelDesktop.Controls.Add(dGV);
 
             dGV.Columns.Add(new DataGridViewTextBoxColumn
             {
@@ -506,6 +431,14 @@ namespace PrivilegeUI
 
             dGV.Columns.Add(new DataGridViewTextBoxColumn
             {
+                HeaderText = "Статус",
+                DataPropertyName = "StatusEnum",
+                Name = "StatusEnum",
+                Visible = false
+            });
+
+            dGV.Columns.Add(new DataGridViewTextBoxColumn
+            {
                 HeaderText = "Дата добавления",
                 DataPropertyName = "DateAdd",
                 Name = "DateAdd",
@@ -525,14 +458,16 @@ namespace PrivilegeUI
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/applications");
-                response.EnsureSuccessStatusCode();
+                var response = await _apiClient.GetAsync<CollectionResult<Application>>("api/applications");
 
-                var content = await response.Content.ReadAsStringAsync();
-                var applications = JsonSerializer.Deserialize<Application[]>(content, new JsonSerializerOptions
+                if(response == null || !response.IsSuccess || response.Data == null)
                 {
-                    PropertyNameCaseInsensitive = true
-                });
+                    MessageBox.Show($"Ошибка загрузки данных: {response?.ErrorMessage ?? "Неизвестная ошибка"}");
+                    return;
+                }
+
+                var applications = response.Data;
+                _applications = applications.ToList();
 
                 dGV.Rows.Clear();
 
@@ -541,6 +476,7 @@ namespace PrivilegeUI
                     dGV.Rows.Add(
                         app.Id,
                         app.Name,
+                        EnumHelper.GetEnumDisplayName(app.Status),
                         app.Status,
                         app.DateAdd,
                         app.DateEdit,
@@ -559,15 +495,11 @@ namespace PrivilegeUI
             timer_refresh.Stop();
             DisableButton();
 
-            _currentBtn = (Button)senderBtn;
-            _currentBtn.BackColor = Color.FromArgb(0, 36, 63);
-            _leftBorderBtn.BackColor = Color.Gainsboro;
-            _leftBorderBtn.Location = new Point(0, _currentBtn.Location.Y);
-            _leftBorderBtn.Visible = true;
-            _leftBorderBtn.BringToFront();
+            _currentBtn = senderBtn as Button;
+            if (_currentBtn == null) return;
 
-            pB_CurrentChildForm.BackgroundImage = _currentBtn.Image;
-            lblTitleClildForm.Text = _currentBtn.Tag.ToString();
+            pB_CurrentChildForm.Image = _currentBtn.Image;
+            lblTitleClildForm.Text = _currentBtn.Tag?.ToString();
         }
 
         private void DisableButton()
@@ -582,18 +514,11 @@ namespace PrivilegeUI
         public void ResetButton()
         {
             DisableButton();
-            if (_currentChildForm?.DialogResult == DialogResult.OK)
-                LoadApplicationsAsync().ContinueWith(task =>
-                {
-                    if (task.IsFaulted)
-                    {
-                        MessageBox.Show($"Ошибка при обновлении данных: {task.Exception?.Message}");
-                    }
-                });
+            LoadApplications();
             _currentChildForm?.Close();
             _currentChildForm = null;
             _leftBorderBtn.Visible = false;
-            pB_CurrentChildForm.BackgroundImage = _isArchive ? Properties.Resources.winrar_white_40 : Properties.Resources.home_white_96;
+            pB_CurrentChildForm.Image = _isArchive ? Properties.Resources.winrar_white_40 : Properties.Resources.home_white_96;
             lblTitleClildForm.Text = _isArchive ? @"Архив" : @"Главный экран";
             timer_refresh.Start();
         }
@@ -601,6 +526,8 @@ namespace PrivilegeUI
         private void OpenChildForm(Form childForm)
         {
             _currentChildForm?.Close();
+
+            panelDesktop.Controls.Clear(); 
 
             _currentChildForm = childForm;
             childForm.TopLevel = false;
@@ -610,8 +537,11 @@ namespace PrivilegeUI
             panelDesktop.Tag = childForm;
             childForm.BringToFront();
             childForm.Show();
+
             if (childForm.IsDisposed)
+            {
                 DisableButton();
+            }
         }
 
         protected override async void OnFormClosing(FormClosingEventArgs e)

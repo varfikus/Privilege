@@ -1,6 +1,4 @@
-﻿using System.Windows.Forms;
-
-namespace PrivilegeUI.MyControls
+﻿namespace PrivilegeUI.MyControls
 {
     class DoubleBufferedDataGridView : DataGridView
     {
