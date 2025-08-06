@@ -11,6 +11,6 @@ namespace PrivilegeAPI.Interfaces
 
         Task<BaseResult<ApplicationDto>> CreateApplicationAsync(ApplicationDto applicationDto);
 
-        Task<BaseResult<bool>> UpdateApplicationAsync(ApplicationDto applicationDto);
+        Task<BaseResult<ApplicationDto>> UpdateApplicationAsync(ApplicationDto applicationDto);
     }
 }

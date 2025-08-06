@@ -1,12 +1,6 @@
-﻿using FluentFTP.Helpers;
-using PrivilegeAPI;
-using PrivilegeAPI.Result;
+﻿using PrivilegeAPI;
 using PrivilegeAPI.Services;
 using PrivilegeUI.Classes;
-using PrivilegeUI.Models;
-using System.ComponentModel.DataAnnotations;
-using System.Reflection;
-using System.Text.Json;
 using System.Xml.Serialization;
 using static PrivilegeUI.Models.FullApplication;
 using Application = PrivilegeAPI.Models.Application;
@@ -116,7 +110,7 @@ namespace PrivilegeUI.Sub
         }
 
         private async void btn_fileApplyDownload_Click(object sender, EventArgs e)
-        {   
+        {
             await DownloadAndOpenFile(_app.File.Path, false);
         }
 
@@ -171,8 +165,7 @@ namespace PrivilegeUI.Sub
         {
             try
             {
-                string localBaseDir = Path.GetTempPath();
-                string localPath = Path.Combine(localBaseDir, fileName);
+                string localPath = FileHelper.PrepareTempFilePath(fileName);
                 string localDir = Path.GetDirectoryName(localPath);
 
                 if (!Directory.Exists(localDir))
@@ -238,13 +231,15 @@ namespace PrivilegeUI.Sub
         }
         #endregion
 
+
+        #region Methods
+
         public async Task<Htmlx> LoadHtmlxFromFtpAsync(string remoteFtpPath)
         {
             try
             {
                 string fileName = Path.GetFileName(remoteFtpPath);
-                string tempDir = Path.GetTempPath();
-                string tempPath = Path.Combine(tempDir, fileName);
+                string tempPath = FileHelper.PrepareTempFilePath(fileName);
 
                 if (!File.Exists(tempPath))
                 {
@@ -264,5 +259,7 @@ namespace PrivilegeUI.Sub
                 return null;
             }
         }
+
+        #endregion
     }
 }

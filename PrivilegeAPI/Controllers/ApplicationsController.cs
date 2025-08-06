@@ -69,10 +69,10 @@ namespace PrivilegeAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPut("update")]
+        [HttpPut]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateApplication([FromBody] ApplicationDto updatedApplication)
+        public async Task<ActionResult<BaseResult>> UpdateApplication([FromBody] ApplicationDto updatedApplication)
         {
             var result = await _applicationService.UpdateApplicationAsync(updatedApplication);
             if (!result.IsSuccess)

@@ -1,11 +1,4 @@
-﻿using PrivilegeUI.Classes;
-using PrivilegeUI.Models;
-using PrivilegeUI.Properties;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Windows.Forms;
-using static System.Net.WebRequestMethods;
+﻿using PrivilegeUI.Models;
 
 namespace PrivilegeUI.Sub
 {

@@ -1,17 +1,21 @@
-
-
 using PrivilegeAPI;
 using PrivilegeAPI.Dto;
 using PrivilegeAPI.Result;
-using System.IO;
 
 namespace PrivilegeUI
 {
     public partial class AuthorizationForm : Form
     {
+        #region Fields
+
         private readonly string _apiBaseUrl = "https://localhost:7227";
         private MyHttpClient _apiClient;
         private int _userId;
+
+        #endregion
+
+
+        #region Constructor
 
         public AuthorizationForm()
         {
@@ -26,6 +30,11 @@ namespace PrivilegeUI
 
             this.AcceptButton = btn_ok;
         }
+
+        #endregion
+
+
+        #region Events
 
         private void AuthorizationForm_Load(object sender, EventArgs e)
         {
@@ -59,6 +68,20 @@ namespace PrivilegeUI
             this.Hide();
         }
 
+        private void tB_pass_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                btn_ok.PerformClick();
+            }
+        }
+
+        #endregion
+
+
+        #region Methods
+
         private async Task<bool> Login(string login, string password)
         {
             var loginDto = new AuthDto(login, password);
@@ -83,7 +106,7 @@ namespace PrivilegeUI
             if (cB_save.Checked)
             {
                 Properties.Settings.Default.Login = tB_login.Text;
-                Properties.Settings.Default.Password = tB_pass.Text; 
+                Properties.Settings.Default.Password = tB_pass.Text;
                 Properties.Settings.Default.Save();
             }
             else
@@ -94,13 +117,6 @@ namespace PrivilegeUI
             }
         }
 
-        private void tB_pass_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.Handled = true;
-                btn_ok.PerformClick();
-            }
-        }
+        #endregion
     }
 }

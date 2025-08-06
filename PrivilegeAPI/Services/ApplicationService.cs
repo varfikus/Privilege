@@ -98,14 +98,14 @@ namespace PrivilegeAPI.Services
             }
         }
 
-        public async Task<BaseResult<bool>> UpdateApplicationAsync(ApplicationDto applicationDto)
+        public async Task<BaseResult<ApplicationDto>> UpdateApplicationAsync(ApplicationDto applicationDto)
         {
             try
             {
                 var existingApplication = await _context.Applications.FindAsync(applicationDto.Id);
 
                 if (existingApplication == null)
-                    return new BaseResult<bool>
+                    return new BaseResult<ApplicationDto>
                     {
                         ErrorMessage = "Application not found"
                     };
@@ -115,14 +115,14 @@ namespace PrivilegeAPI.Services
 
                 await _context.SaveChangesAsync();
 
-                return new BaseResult<bool>
+                return new BaseResult<ApplicationDto>
                 {
-                    Data = true
+                    Data = applicationDto
                 };
             }
             catch (Exception ex)
             {
-                return new BaseResult<bool>
+                return new BaseResult<ApplicationDto>
                 {
                     ErrorMessage = ex.Message
                 };

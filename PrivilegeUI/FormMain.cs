@@ -10,8 +10,6 @@ using PrivilegeUI.Properties;
 using PrivilegeUI.Sub;
 using PrivilegeUI.Sub.Issue;
 using System.Data;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using Application = PrivilegeAPI.Models.Application;
 using HubConnection = Microsoft.AspNetCore.SignalR.Client.HubConnection;
 
@@ -19,6 +17,8 @@ namespace PrivilegeUI
 {
     public partial class FormMain : Form
     {
+        #region Fields
+
         private HubConnection _hubConnection;
         private readonly string _apiBaseUrl = "https://localhost:7227";
         private readonly HttpClient _httpClient;
@@ -44,6 +44,11 @@ namespace PrivilegeUI
 
         private List<Application> _applications;
 
+        #endregion
+
+
+        #region Constructor
+
         public FormMain(int userId, MyHttpClient apiClient)
         {
             InitializeComponent();
@@ -62,13 +67,13 @@ namespace PrivilegeUI
             this.SavingOn();
         }
 
-        private void FormMain_Load(object sender, EventArgs e)
-        {
-        }
+        #endregion
+
+
+        #region Events
 
         private async void FormMain_Shown(object sender, EventArgs e)
         {
-            //обновление
             //CheckUpdate(false);
 
             var result = await _apiClient.GetAsync<BaseResult<UserDto>>($"api/users/id/{_userId}");
@@ -105,18 +110,6 @@ namespace PrivilegeUI
             InitializeSignalR();
         }
 
-        private void LoadApplications()
-        {
-            InitializeDataGridView();
-            LoadApplicationsAsync().ContinueWith(task =>
-            {
-                if (task.IsFaulted)
-                {
-                    MessageBox.Show($"Ошибка при загрузке заявок: {task.Exception?.Message}");
-                }
-            });
-        }
-
         private void FormMain_FormClosed(object sender, FormClosedEventArgs e)
         {
             System.Windows.Forms.Application.Exit();
@@ -134,6 +127,17 @@ namespace PrivilegeUI
             {
                 MessageBox.Show(ex.Message, @"Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        protected override async void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (_hubConnection != null)
+            {
+                _hubConnection.StopAsync();
+                _hubConnection.DisposeAsync();
+            }
+            _httpClient.Dispose();
+            base.OnFormClosing(e);
         }
 
         private void pB_header_Click(object sender, EventArgs e)
@@ -178,7 +182,7 @@ namespace PrivilegeUI
             OpenChildForm(new FormInfo(_apiClient, app, this));
         }
 
-        private void btn_finaly_Click(object sender, EventArgs e)
+        private void btn_apply_Click(object sender, EventArgs e)
         {
             if (dGV.CurrentRow == null)
             {
@@ -199,12 +203,9 @@ namespace PrivilegeUI
                 MessageBox.Show("Заявка не найдена в списке.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-
-            ActivateButton(sender);
-            OpenChildForm(new FormAnsPos(_apiClient, app, this));
         }
 
-        private void btn_finalyPaper_Click(object sender, EventArgs e)
+        private void btn_finaly_Click(object sender, EventArgs e)
         {
             if (dGV.CurrentRow == null)
             {
@@ -280,12 +281,14 @@ namespace PrivilegeUI
                 lblTitleClildForm.Text = @"Главный экран";
                 pB_CurrentChildForm.Image = Properties.Resources.home_white_96;
                 _isArchive = false;
+                ShowButtons(true);
             }
             else
             {
                 lblTitleClildForm.Text = @"Архив";
                 pB_CurrentChildForm.Image = Properties.Resources.winrar_white_40;
                 _isArchive = true;
+                ShowButtons(false);
             }
             LoadApplications();
             timer_refresh.Start();
@@ -348,6 +351,21 @@ namespace PrivilegeUI
                 }
             }
         }
+
+        private void ShowButtons(bool show)
+        {
+            btn_cancel.Visible = show;
+            btn_finaly.Visible = show;
+            btn_apply.Visible = show;
+        }
+
+        #endregion
+
+
+        #region Methods
+
+
+        #region SignalR
 
         private async void InitializeSignalR()
         {
@@ -424,6 +442,23 @@ namespace PrivilegeUI
             };
             _connectionCheckTimer.AutoReset = true;
             _connectionCheckTimer.Start();
+        }
+
+        #endregion
+
+
+        #region DataGridView
+
+        private void LoadApplications()
+        {
+            InitializeDataGridView();
+            LoadApplicationsAsync().ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    MessageBox.Show($"Ошибка при загрузке заявок: {task.Exception?.Message}");
+                }
+            });
         }
 
         private void InitializeDataGridView()
@@ -518,12 +553,19 @@ namespace PrivilegeUI
                         app.DateEdit
                     );
                 }
+
+                dGV.ClearSelection();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при загрузке заявок: {ex.Message}\nStackTrace: {ex.StackTrace}");
             }
         }
+
+        #endregion
+
+
+        #region ChildForm
 
         private void ActivateButton(object senderBtn)
         {
@@ -546,6 +588,7 @@ namespace PrivilegeUI
             }
         }
 
+        
         public void ResetButton()
         {
             DisableButton();
@@ -562,7 +605,7 @@ namespace PrivilegeUI
         {
             _currentChildForm?.Close();
 
-            panelDesktop.Controls.Clear(); 
+            panelDesktop.Controls.Clear();
 
             _currentChildForm = childForm;
             childForm.TopLevel = false;
@@ -579,15 +622,9 @@ namespace PrivilegeUI
             }
         }
 
-        protected override async void OnFormClosing(FormClosingEventArgs e)
-        {
-            if (_hubConnection != null)
-            {
-                _hubConnection.StopAsync();
-                _hubConnection.DisposeAsync();
-            }
-            _httpClient.Dispose();
-            base.OnFormClosing(e);
-        }
+        #endregion
+
+
+        #endregion
     }
 }

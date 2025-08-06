@@ -1,11 +1,16 @@
 ﻿using PrivilegeAPI;
+using PrivilegeAPI.Dto;
+using PrivilegeAPI.Models;
+using PrivilegeAPI.Result;
 using PrivilegeAPI.Services;
+using PrivilegeUI.Classes;
 using PrivilegeUI.Models;
-using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using static PrivilegeUI.Models.FullApplication;
 using Application = PrivilegeAPI.Models.Application;
+using File = System.IO.File;
+using FtpSettings = PrivilegeAPI.Services.FtpSettings;
 
 namespace PrivilegeUI.Sub.Issue
 {
@@ -21,23 +26,6 @@ namespace PrivilegeUI.Sub.Issue
         /// Родительская форма
         /// </summary>
         private readonly FormMain _parentForm;
-        /// <summary>
-        /// Строка из DataGridView
-        /// </summary>
-        private readonly DataGridViewRow _row;
-
-        /// <summary>
-        /// ID записи
-        /// </summary>
-        private int _id;
-        /// <summary>
-        /// ID госуслуг
-        /// </summary>
-        private string _idGosUslugi;
-        /// <summary>
-        /// ID госуслуги (ЕРГУ)
-        /// </summary>
-        private int _idService;
         /// <summary>
         /// Путь до исходящего документа
         /// </summary>
@@ -268,15 +256,14 @@ namespace PrivilegeUI.Sub.Issue
                 }
 
                 string tempFileName = $"answer_{_app.File.Name}";
-                string tempFilePath = Path.Combine(baseTempPath, tempFileName);
+                string tempFilePath = FileHelper.PrepareTempFilePath(tempFileName);
                 xdoc.Save(tempFilePath, SaveOptions.DisableFormatting);
 
                 string ftpFilePath = $"Applications/AnswerNeg/{tempFileName}";
                 await ftpContext.SaveFileAsync(ftpFilePath, tempFilePath);
                 await ftpContext.DisconnectAsync();
 
-                //if (File.Exists(tempFilePath))
-                //    File.Delete(tempFilePath);
+                await UpdateAsync();
 
                 return true;
             }
@@ -292,8 +279,7 @@ namespace PrivilegeUI.Sub.Issue
             try
             {
                 string fileName = Path.GetFileName(remoteFtpPath);
-                string tempDir = Path.GetTempPath();
-                string tempPath = Path.Combine(tempDir, fileName);
+                string tempPath = FileHelper.PrepareTempFilePath(fileName);
 
                 if (!File.Exists(tempPath))
                 {
@@ -317,188 +303,34 @@ namespace PrivilegeUI.Sub.Issue
         #region UpdateDb
 
         ///// <summary>
-        ///// Обновление данных в базе данных MySQL.
+        ///// Обновление данных
         ///// </summary>
-        //private bool UpdateMySql()
-        //{
-        //    int file = SaveFile();
-        //    if (file == 0)
-        //        return false;
+        private async Task<bool> UpdateAsync()
+        {
+            try
+            {
+                ApplicationDto applicationDto = new ApplicationDto
+                {
+                    Id = _app.Id,
+                    Status = StatusEnum.DenialApply
+                };
 
-        //    MySqlConnection conn = new MySqlConnection(Connection.Conn);
-        //    conn.Open();
-        //    MySqlCommand cmd = conn.CreateCommand();
+                var result = await _apiClient.PutAsync<ApplicationDto, BaseResult<ApplicationDto>>("api/applications", applicationDto);
 
-        //    try
-        //    {
-        //        cmd.CommandText = "UPDATE documents SET " +
-        //                          "status = @status, " +
-        //                          "date_ispoln = @date_ispoln, " +
-        //                          "file_finaly = @file_finaly, " +
-        //                          "flag_file_finaly = @flag_file_finaly " +
-        //                          "WHERE id = @id";
+                if (!(result == null) && result.IsSuccess)
+                {
+                    return true;
+                }
 
-        //        cmd.Parameters.AddWithValue("@status", 4);
-        //        cmd.Parameters.AddWithValue("@date_ispoln", dTP_dateOut.Value);
-        //        cmd.Parameters.AddWithValue("@file_finaly", file);
-        //        cmd.Parameters.AddWithValue("@flag_file_finaly", 0);
-        //        cmd.Parameters.AddWithValue("@id", _id);
-        //        cmd.ExecuteNonQuery();
-        //        Logger.Log.Warn("[" + _id + "] " + "Отказано в выдаче документа");
-        //        Connection.AddLogs(_id.ToString(), "Отказано в выдаче документа");
-        //        return true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Logger.Log.Warn("[" + _id + "] Возникла ошибка обновления записи: " + ex.Message);
-        //        DelFile(file);
-        //        Connection.AddLogs(_id.ToString(), "Возникла ошибка обновления записи: " + ex.Message);
-        //        MessageBox.Show(@"Возникла ошибка обновления записи:" + Environment.NewLine + ex.Message,
-        //            @"Ошибка обновления", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //        return false;
-        //    }
-        //    finally
-        //    {
-        //        conn.Close();
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Сохранить файл в базе данных MySQL
-        ///// </summary>
-        //private int SaveFile()
-        //{
-        //    int serviceResult = 0;
-        //    string param = "{\"serviceId\":\"" + _idGosUslugi + "\", \"serviceResult\":" + serviceResult + "}";
-        //    string signature = "";
-
-        //    bool flagDocSig = false;
-        //    List<MyCert> cert = SignDoc.GelAllCertificates();
-        //    foreach (var c in cert)
-        //    {
-        //        if (c.ToString() == UserInfo.Sert)
-        //        {
-        //            try
-        //            {
-        //                XmlDocument xmlDocument = new XmlDocument { PreserveWhitespace = true };
-        //                xmlDocument.Load(_path);
-        //                var xml1 = xmlDocument.InnerXml;
-        //                xmlDocument = SignDoc.FileSignCadesBesX(xmlDocument, c);
-        //                var xml2 = xmlDocument.InnerXml;
-        //                WorkMethods.SaveFileXml(xmlDocument, _path);
-        //                flagDocSig = !Equals(xml1, xml2);
-
-        //                string fileParam = WorkMethods.GetFileParam();
-        //                if (fileParam != "")
-        //                {
-        //                    fileParam = fileParam.Replace("<container></container>",
-        //                        "<container>" + param + "</container>");
-        //                    signature =
-        //                        WorkMethods.GetSignaturesFromStream(
-        //                            SignDoc.FileSignCadesBes(WorkMethods.GenerateStreamFromString(fileParam), c));
-        //                }
-        //                else
-        //                {
-        //                    using (Stream stream = WorkMethods.GenerateStreamFromString(param))
-        //                    {
-        //                        signature = WorkMethods.GenerateStringFromStream(SignDoc.FileSignCadesBes(stream, c));
-        //                    }
-        //                }
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                string mes = "Возникла ошибка при подписании: " + ex.Message;
-        //                Logger.Log.Warn("[" + _id + "] " + mes);
-        //                Connection.AddLogs(_id.ToString(), "Возникла ошибка при подписании: " + ex.Message);
-        //                MessageBox.Show(mes);
-        //                return 0;
-        //            }
-        //        }
-        //    }
-
-        //    if (signature == string.Empty || !flagDocSig)
-        //    {
-        //        string mes = "Документ не подписан";
-        //        Logger.Log.Warn("[" + _id + "] " + mes);
-        //        Connection.AddLogs(_id.ToString(), mes);
-        //        MessageBox.Show(mes + @"." + Environment.NewLine + @"Возможно не выбран сертификат в настройках программы.",
-        //            @"Ошибка обновления", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //        return 0;
-        //    }
-
-        //    string pathFtp = "/" + _idGosUslugi + "/finaly.xml";
-        //    if (!MyFtp.UploadToFtp(_path, pathFtp))
-        //    {
-        //        string mes = "Возникла ошибка при загрузке файл на FTP-сервер.";
-        //        Logger.Log.Warn("[" + _id + "] " + mes);
-        //        Connection.AddLogs(_id.ToString(), mes + " Файл: " + pathFtp);
-        //        MessageBox.Show(mes, @"Ошибка обновления", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //        return 0;
-        //    }
-
-        //    MySqlConnection conn = new MySqlConnection(Connection.Conn);
-        //    conn.Open();
-        //    MySqlCommand cmd = conn.CreateCommand();
-
-        //    try
-        //    {
-        //        cmd.CommandText = "INSERT INTO files " +
-        //                          "( file,  service_result,  params,  param_signature) " +
-        //                          "VALUES " +
-        //                          "(@file, @service_result, @params, @param_signature)";
-
-        //        cmd.Parameters.AddWithValue("@file", pathFtp);
-        //        cmd.Parameters.AddWithValue("@service_result", serviceResult);
-        //        cmd.Parameters.AddWithValue("@params", param);
-        //        cmd.Parameters.AddWithValue("@param_signature", signature);
-        //        cmd.ExecuteNonQuery();
-        //        cmd = conn.CreateCommand();
-        //        cmd.CommandText += "SELECT @@IDENTITY";
-        //        int id = Convert.ToInt32(cmd.ExecuteScalar());
-        //        Logger.Log.Info("[" + _id + "] Файл сохранён в базе данных");
-        //        return id;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Logger.Log.Warn("[" + _id + "] Возникла при добавлении файла в БД: " + ex.Message);
-        //        Connection.AddLogs(_id.ToString(), "Возникла при добавлении файла в БД: " + ex.Message);
-        //        MessageBox.Show(@"Возникла при добавлении файла в БД:" + Environment.NewLine + ex.Message,
-        //            @"Ошибка обновления", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //        return 0;
-        //    }
-        //    finally
-        //    {
-        //        conn.Close();
-        //    }
-        //}
-
-        ///// <summary>
-        ///// Удаление файла по ID
-        ///// </summary>
-        ///// <param name="fileId">ID файла</param>
-        //private void DelFile(int fileId)
-        //{
-        //    MySqlConnection conn = new MySqlConnection(Connection.Conn);
-        //    conn.Open();
-        //    MySqlCommand cmd = conn.CreateCommand();
-
-        //    cmd.CommandText = "DELETE FROM files " +
-        //                      "WHERE id = @id";
-        //    cmd.Parameters.AddWithValue("@id", fileId);
-
-        //    try
-        //    {
-        //        cmd.ExecuteNonQuery();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Logger.Log.Warn("[" + _id + "] " + "Ошибка удаления файла из базы данных: " + ex.Message);
-        //    }
-        //    finally
-        //    {
-        //        conn.Close();
-        //    }
-        //}
+                return false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(@"Возникла ошибка обновления записи:" + Environment.NewLine + ex.Message,
+                    @"Ошибка обновления", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
 
         #endregion
 
