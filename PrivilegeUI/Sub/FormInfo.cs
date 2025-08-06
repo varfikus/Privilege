@@ -42,7 +42,7 @@ namespace PrivilegeUI.Sub
                 Port = Properties.Settings.Default.PortFTP
             };
             ftpContext = new FtpService(ftpSettings);
-            this._app = app;
+            _app = app;
             _orderId = _app.Id;
             _parentForm = parentForm;
         }
@@ -137,12 +137,34 @@ namespace PrivilegeUI.Sub
 
         private async void btn_fileFinalyDownload_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile(_app.File.Path, false);
+            if (_app.Status == PrivilegeAPI.Models.StatusEnum.Final)
+            {
+                await DownloadAndOpenFile("Applications/AnswerPos/answer_" + _app.File.Name, false);
+            }
+            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.DenialApply)
+            {
+                await DownloadAndOpenFile("Applications/AnswerNeg/answer_" + _app.File.Name, false);
+            }
+            else
+            {
+                MessageBox.Show("Невозможно загрузить файл, так как заявка не завершена.");
+            }
         }
 
         private async void btn_fileFinalyOpen_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile(_app.File.Path, true);
+            if (_app.Status == PrivilegeAPI.Models.StatusEnum.Final)
+            {
+                await DownloadAndOpenFile("Applications/AnswerPos/answer_" + _app.File.Name, true);
+            }
+            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.DenialApply)
+            {
+                await DownloadAndOpenFile("Applications/AnswerNeg/answer_" + _app.File.Name, true);
+            }
+            else
+            {
+                MessageBox.Show("Невозможно открыть файл, так как заявка не завершена.");
+            }
         }
 
         private async Task DownloadAndOpenFile(string fileName, bool openAfterDownload)
@@ -220,9 +242,14 @@ namespace PrivilegeUI.Sub
         {
             try
             {
-                string tempPath = Path.GetTempFileName();
+                string fileName = Path.GetFileName(remoteFtpPath);
+                string tempDir = Path.GetTempPath();
+                string tempPath = Path.Combine(tempDir, fileName);
 
-                await ftpContext.DownloadFileAsync(remoteFtpPath, tempPath);
+                if (!File.Exists(tempPath))
+                {
+                    await ftpContext.DownloadFileAsync(remoteFtpPath, tempPath);
+                }
 
                 XmlSerializer serializer = new XmlSerializer(typeof(Htmlx));
                 using (FileStream fs = new FileStream(tempPath, FileMode.Open))

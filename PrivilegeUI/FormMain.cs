@@ -6,7 +6,9 @@ using PrivilegeAPI.Models;
 using PrivilegeAPI.Result;
 using PrivilegeUI.Classes;
 using PrivilegeUI.Models;
+using PrivilegeUI.Properties;
 using PrivilegeUI.Sub;
+using PrivilegeUI.Sub.Issue;
 using System.Data;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -69,18 +71,6 @@ namespace PrivilegeUI
             //обновление
             //CheckUpdate(false);
 
-            ////проверка настроек и если не все заполнены, то открытие открытие окна настроек
-            //if (Connection.Ftp == null || 
-            //    (Connection.Ftp.Ip == "" && Connection.Ftp.User == "") ||
-            //    !MyFtp.CheckConnection())
-            //{
-            //    ActivateButton(btn_settings);
-            //    OpenChildForm(new FormSettings(this));
-            //}
-
-            //LoadInfo();
-            //timer_refresh.Start();
-
             var result = await _apiClient.GetAsync<BaseResult<UserDto>>($"api/users/id/{_userId}");
 
             if (result == null)
@@ -103,6 +93,14 @@ namespace PrivilegeUI
                 Login = result.Data.Login,
                 Name = result.Data.Name
             };
+
+            if (Settings.Default.ServerFTP == "" ||
+                (Settings.Default.UserFTP == "" && Settings.Default.PassFTP == "") ||
+                Settings.Default.PortFTP == 0)
+            {
+                ActivateButton(btn_settings);
+                OpenChildForm(new FormSettings(this));
+            }
 
             InitializeSignalR();
         }
@@ -140,7 +138,7 @@ namespace PrivilegeUI
 
         private void pB_header_Click(object sender, EventArgs e)
         {
-            //ResetButton();
+            ResetButton();
         }
 
         private void btn_refresh_Click(object sender, EventArgs e)
@@ -180,90 +178,123 @@ namespace PrivilegeUI
             OpenChildForm(new FormInfo(_apiClient, app, this));
         }
 
-        private void btn_apply_Click(object sender, EventArgs e)
-        {
-            if (dGV.CurrentRow != null)
-            {
-                //ActivateButton(sender);
-                //OpenChildForm(new FormApply(this, dGV.CurrentRow));
-            }
-        }
-
-        private void btn_denial_Click(object sender, EventArgs e)
-        {
-            if (dGV.CurrentRow != null)
-            {
-                //ActivateButton(sender);
-                //OpenChildForm(new FormApply(this, dGV.CurrentRow, false));
-            }
-        }
-
         private void btn_finaly_Click(object sender, EventArgs e)
         {
-            if (dGV.CurrentRow != null)
+            if (dGV.CurrentRow == null)
             {
-                //ActivateButton(sender);
-                //OpenChildForm(new FormAnsPos(this, dGV.CurrentRow));
+                MessageBox.Show("Выберите строку для отображения информации.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
+
+            if (!int.TryParse(dGV.CurrentRow.Cells["id"].Value?.ToString(), out int id))
+            {
+                MessageBox.Show("Не удалось определить ID заявки.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var app = _applications?.FirstOrDefault(a => a.Id == id);
+
+            if (app == null)
+            {
+                MessageBox.Show("Заявка не найдена в списке.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ActivateButton(sender);
+            OpenChildForm(new FormAnsPos(_apiClient, app, this));
         }
 
         private void btn_finalyPaper_Click(object sender, EventArgs e)
         {
-            if (dGV.CurrentRow != null)
+            if (dGV.CurrentRow == null)
             {
-                //ActivateButton(sender);
-                //OpenChildForm(new FormAnsPaper(this, dGV.CurrentRow));
+                MessageBox.Show("Выберите строку для отображения информации.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
+
+            if (!int.TryParse(dGV.CurrentRow.Cells["id"].Value?.ToString(), out int id))
+            {
+                MessageBox.Show("Не удалось определить ID заявки.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var app = _applications?.FirstOrDefault(a => a.Id == id);
+
+            if (app == null)
+            {
+                MessageBox.Show("Заявка не найдена в списке.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ActivateButton(sender);
+            OpenChildForm(new FormAnsPos(_apiClient, app, this));
         }
 
         private void btn_cancel_Click(object sender, EventArgs e)
         {
-            if (dGV.CurrentRow != null)
+            if (dGV.CurrentRow == null)
             {
-                //ActivateButton(sender);
-                //OpenChildForm(new FormAnsNeg(this, dGV.CurrentRow));
+                MessageBox.Show("Выберите строку для отображения информации.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
+
+            if (!int.TryParse(dGV.CurrentRow.Cells["id"].Value?.ToString(), out int id))
+            {
+                MessageBox.Show("Не удалось определить ID заявки.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var app = _applications?.FirstOrDefault(a => a.Id == id);
+
+            if (app == null)
+            {
+                MessageBox.Show("Заявка не найдена в списке.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ActivateButton(sender);
+            OpenChildForm(new FormAnsNeg(_apiClient, app, this));
         }
 
         private void btn_archive_Click(object sender, EventArgs e)
         {
-            //if (backgroundWorker1.IsBusy)
-            //{
-            //    MessageBox.Show(@"В данный момент происходит загрузка данных", @"Внимание",
-            //        MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            //    return;
-            //}
+            if (backgroundWorker1.IsBusy)
+            {
+                MessageBox.Show(@"В данный момент происходит загрузка данных", @"Внимание",
+                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
+            }
 
-            //if (_currentChildForm != null)
-            //{
-            //    if (MessageBox.Show(@"Закрыть предыдущее окно?", @"Внимание",
-            //        MessageBoxButtons.YesNo) == DialogResult.Yes)
-            //        ResetButton();
-            //    else
-            //        return;
-            //}
+            if (_currentChildForm != null)
+            {
+                if (MessageBox.Show(@"Закрыть предыдущее окно?", @"Внимание",
+                    MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    ResetButton();
+                else
+                    return;
+            }
 
-            //timer_refresh.Stop();
-            //if (_isArchive)
-            //{
-            //    lblTitleClildForm.Text = @"Главный экран";
-            //    pB_CurrentChildForm.BackgroundImage = Properties.Resources.home_white_96;
-            //    _isArchive = false;
-            //}
-            //else
-            //{
-            //    lblTitleClildForm.Text = @"Архив";
-            //    pB_CurrentChildForm.BackgroundImage = Properties.Resources.winrar_white_40;
-            //    _isArchive = true;
-            //}
-            //LoadInfo();
-            //timer_refresh.Start();
+            timer_refresh.Stop();
+            if (_isArchive)
+            {
+                lblTitleClildForm.Text = @"Главный экран";
+                pB_CurrentChildForm.Image = Properties.Resources.home_white_96;
+                _isArchive = false;
+            }
+            else
+            {
+                lblTitleClildForm.Text = @"Архив";
+                pB_CurrentChildForm.Image = Properties.Resources.winrar_white_40;
+                _isArchive = true;
+            }
+            LoadApplications();
+            timer_refresh.Start();
         }
 
         private void btn_settings_Click(object sender, EventArgs e)
         {
-            //ActivateButton(sender);
-            //OpenChildForm(new FormSettings(this));
+            ActivateButton(sender);
+            OpenChildForm(new FormSettings(this));
         }
 
         private void btn_update_Click(object sender, EventArgs e)
@@ -460,18 +491,23 @@ namespace PrivilegeUI
             {
                 var response = await _apiClient.GetAsync<CollectionResult<Application>>("api/applications");
 
-                if(response == null || !response.IsSuccess || response.Data == null)
+                if (response == null || !response.IsSuccess || response.Data == null)
                 {
                     MessageBox.Show($"Ошибка загрузки данных: {response?.ErrorMessage ?? "Неизвестная ошибка"}");
                     return;
                 }
 
                 var applications = response.Data;
-                _applications = applications.ToList();
+
+                var filteredApps = _isArchive
+                    ? applications.Where(app => app.Status == StatusEnum.Final || app.Status == StatusEnum.DenialApply)
+                    : applications.Where(app => app.Status != StatusEnum.Final && app.Status != StatusEnum.DenialApply);
+
+                _applications = filteredApps.ToList();
 
                 dGV.Rows.Clear();
 
-                foreach (var app in applications)
+                foreach (var app in _applications)
                 {
                     dGV.Rows.Add(
                         app.Id,
@@ -479,14 +515,13 @@ namespace PrivilegeUI
                         EnumHelper.GetEnumDisplayName(app.Status),
                         app.Status,
                         app.DateAdd,
-                        app.DateEdit,
-                        app.FileId
+                        app.DateEdit
                     );
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading applications: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                MessageBox.Show($"Ошибка при загрузке заявок: {ex.Message}\nStackTrace: {ex.StackTrace}");
             }
         }
 

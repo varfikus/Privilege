@@ -53,17 +53,10 @@ namespace PrivilegeUI
             if (!IsSuccess)
                 return;
 
-            if (rB_client.Checked)
-            {
-                SaveSettings();
-                FormMain userForm = new FormMain(_userId, _apiClient);
-                userForm.Show();
-                this.Hide();
-            }
-            else
-            {
-                MessageBox.Show("Пожалуйста, выберите тип пользователя.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
+            SaveSettings();
+            FormMain userForm = new FormMain(_userId, _apiClient);
+            userForm.Show();
+            this.Hide();
         }
 
         private async Task<bool> Login(string login, string password)

@@ -94,5 +94,17 @@ namespace PrivilegeUI.Properties {
                 this["Password"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string UserTel {
+            get {
+                return ((string)(this["UserTel"]));
+            }
+            set {
+                this["UserTel"] = value;
+            }
+        }
     }
 }

@@ -1,6 +1,11 @@
-﻿using PrivilegeUI.Models;
+﻿using PrivilegeAPI;
+using PrivilegeAPI.Services;
+using PrivilegeUI.Models;
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.Serialization;
+using static PrivilegeUI.Models.FullApplication;
+using Application = PrivilegeAPI.Models.Application;
 
 namespace PrivilegeUI.Sub.Issue
 {
@@ -8,6 +13,10 @@ namespace PrivilegeUI.Sub.Issue
     {
         #region Fields
 
+        /// <summary
+        /// Клиент для работы с API
+        /// </summary>
+        private readonly MyHttpClient _apiClient;
         /// <summary>
         /// Родительская форма
         /// </summary>
@@ -33,17 +42,31 @@ namespace PrivilegeUI.Sub.Issue
         /// Путь до исходящего документа
         /// </summary>
         private string _path;
+        private Application _app;
+        private Htmlx fullApp;
+
+        private FtpSettings ftpSettings;
+        private FtpService ftpContext;
 
         #endregion
 
 
         #region Constructor
 
-        public FormAnsNeg(FormMain parentForm, DataGridViewRow row)
+        public FormAnsNeg(MyHttpClient apiClient, Application app, FormMain parentForm)
         {
             InitializeComponent();
+            ftpSettings = new FtpSettings
+            {
+                Server = Properties.Settings.Default.ServerFTP,
+                Username = Properties.Settings.Default.UserFTP,
+                Password = Properties.Settings.Default.PassFTP,
+                Port = Properties.Settings.Default.PortFTP
+            };
+            ftpContext = new FtpService(ftpSettings);
+            _apiClient = apiClient;
+            _app = app;
             _parentForm = parentForm;
-            _row = row;
         }
 
         #endregion
@@ -51,29 +74,44 @@ namespace PrivilegeUI.Sub.Issue
 
         #region Events
 
-        private void FormAnsNeg_Load(object sender, EventArgs e)
+        private async void FormAnsNeg_Load(object sender, EventArgs e)
         {
-            tB_operator.Text = UserInfo.CurrentUser.Name;
+            try
+            {
+                if (_app.Id <= 0)
+                {
+                    MessageBox.Show("Неверный идентификатор заявки.");
+                    Close();
+                    return;
+                }
 
-            _idGosUslugi = _row.Cells["id_gosuslug"].Value.ToString();
-            int.TryParse(_row.Cells["id"].Value.ToString(), out _id);
-            int.TryParse(_row.Cells["service_id"].Value.ToString(), out _idService);
-            tB_fio.Text = _row.Cells["fio"].Value.ToString();
-            tB_service.Text = _row.Cells["name_usl"].Value.ToString();
+                fullApp = await LoadHtmlxFromFtpAsync(_app.File.Path);
+                if (fullApp == null)
+                {
+                    MessageBox.Show("Не удалось загрузить данные заявки.");
+                    Close();
+                    return;
+                }
 
-            lbl_header.Text += @" [" + _idGosUslugi + @"]";
+                tB_operator.Text = UserInfo.CurrentUser.Name;
+                tB_service.Text = fullApp.Body2.Servinfo.Nameservice;
+                tB_fio.Text = $"{fullApp.Body2.Container.Topheader.Tophead.PersData.Fam} {fullApp.Body2.Container.Topheader.Tophead.PersData.Im} {fullApp.Body2.Container.Topheader.Tophead.PersData.Ot}";
+                dTP_dateOut.Value = DateTime.Now;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при загрузке заявки: " + ex.Message);
+            }
         }
 
-        private void btnOk_Click(object sender, EventArgs e)
+        private async void btnOk_Click(object sender, EventArgs e)
         {
             if (!Valid())
                 return;
 
-            if (!CreateDoc())
+            bool ok = await CreateDoc();
+            if (!ok)
                 return;
-
-            //if (!UpdateMySql())
-            //    return;
 
             DialogResult = DialogResult.OK;
             _parentForm?.ResetButton();
@@ -87,10 +125,11 @@ namespace PrivilegeUI.Sub.Issue
             Close();
         }
 
-        private void btn_preview_Click(object sender, EventArgs e)
+        private async void btn_preview_Click(object sender, EventArgs e)
         {
-            //if (CreateDoc())
-            //    WorkMethods.OpenFile(_path);
+            bool ok = await CreateDoc();
+            if (!ok)
+                return;
         }
 
 
@@ -138,7 +177,7 @@ namespace PrivilegeUI.Sub.Issue
         /// Создать документ
         /// </summary>
         /// <returns></returns>
-        private bool CreateDoc()
+        private async Task<bool> CreateDoc()
         {
             //if (!WorkMethods.CheckStatus(_id, new[] { "3", "8", "9" }))
             //{
@@ -147,7 +186,7 @@ namespace PrivilegeUI.Sub.Issue
             //    return false;
             //}
 
-            if (!DocGenerNew())
+            if (!await GenerateHtmlxAndUploadAsync(fullApp.Body2.Servinfo.Idservice, fullApp.Body2.Servinfo.Nameservice, tB_fio.Text, tB_operator.Text, tB_operatorTel.Text, tB_denial.Text))
                 return false;
 
             return true;
@@ -157,158 +196,123 @@ namespace PrivilegeUI.Sub.Issue
         /// Формирование документа
         /// </summary>
         /// <returns></returns>
-        private bool DocGenerNew()
+        public async Task<bool> GenerateHtmlxAndUploadAsync(int idGosUslugi, string service, string fio, string operatorName, string operatorPhone, string reason)
         {
-            //WorkMethods.CheckTempDirectory();
+            try
+            {
+                string baseTempPath = Path.Combine(Path.GetTempPath(), "Applications", "AnswerNeg");
+                Directory.CreateDirectory(baseTempPath);
 
-            //_path = @"temp\doc" + _idGosUslugi + ".xml";
-            //if (!File.Exists(@"template\template.xml"))
-            //{
-            //    MessageBox.Show(@"Не найден шаблон: template.xml", @"Внимание", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            //    return false;
-            //}
+                string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "template", "template.xml");
+                if (!File.Exists(templatePath))
+                {
+                    MessageBox.Show("Не найден шаблон: template.xml", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return false;
+                }
 
-            //XDocument xdoc = XDocument.Load(@"template\template.xml");
-            //XNamespace ns = xdoc.Root?.GetDefaultNamespace();
-            //if (ns == null)
-            //{
-            //    MessageBox.Show(@"Ошибка при формировании документа (Не удалось получить корневой элемент)", @"Ошибка",
-            //        MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            //    return false;
-            //}
-            //XElement body = xdoc.Root?.Element(ns + "body2");
-            //if (body != null)
-            //{
-            //    XElement container = body.Element(ns + "container");
-            //    if (container != null)
-            //    {
-            //        #region Основная часть
+                XDocument xdoc = XDocument.Load(templatePath);
+                XNamespace ns = "http://www.w3.org/1999/xhtml";
 
-            //        XElement reg = container.Element(ns + "reg");
-            //        if (reg != null)
-            //        {
-            //            XElement datareg = reg.Element(ns + "datareg");
-            //            if (datareg != null)
-            //                datareg.Value = Convert.ToDateTime(dTP_dateOut.Value).ToShortDateString();
-            //        }
+                var body2 = xdoc.Descendants(ns + "body2").FirstOrDefault();
+                if (body2 == null)
+                {
+                    MessageBox.Show("Элемент <body2> не найден в шаблоне.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
 
-            //        XElement header = container.Element(ns + "header");
-            //        if (header != null)
-            //        {
-            //            header.Value = "";
-            //        }
+                var container = body2.Element(ns + "container");
+                if (container == null)
+                {
+                    MessageBox.Show("Элемент <container> не найден в шаблоне.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
 
-            //        XElement content = container.Element(ns + "content");
-            //        if (content != null)
-            //        {
-            //            #region content
+                var content = container.Element(ns + "content");
+                if (content != null)
+                {
+                    content.RemoveAll();
 
-            //            content.Value = "";
-            //            switch (_idService)
-            //            {
-            //                case 447:
-            //                    content.Add(
-            //                        new XElement(ns + "p",
-            //                            "Уважаемый(ая) " + tB_fio.Text +
-            //                            ". Сообщаем Вам о невозможности выдачи Вам запрошенной официальной " +
-            //                            "статистической информации по причине " + tB_denial.Text + "."));
-            //                    break;
-            //                default:
-            //                    content.Add(
-            //                        new XElement(ns + "p",
-            //                            "Уважаемый(ая) " + tB_fio.Text +
-            //                            ". Сообщаем Вам о невозможности оказания Вам услуги «" + tB_service.Text +
-            //                            "» по причине того, что " + tB_denial.Text + "."));
-            //                    break;
-            //            }
+                    var styleAttr = new XAttribute("style", "text-indent: 0cm;");
 
-            //            #endregion
-            //        }
+                    content.Add(new XElement(ns + "p", styleAttr, new XText("Уважаемый(ая) " + fio + ", ")));
+                    content.Add(new XElement(ns + "p", styleAttr, new XText("В соответствии с Вашим обращением по услуге \"" + service + "\".")));
+                    content.Add(new XElement(ns + "p", styleAttr, new XText("Ваша заявка отклонена по причине: \"" + reason + "\".")));
+                }
 
-            //        XElement executor = container.Element(ns + "executor");
-            //        if (executor != null)
-            //        {
-            //            XElement executorname = executor.Element(ns + "executorname");
-            //            if (executorname != null)
-            //                executorname.Value = "Исполнитель - " + tB_operator.Text;
-            //            XElement executorphone = executor.Element(ns + "executorphone");
-            //            if (executorphone != null)
-            //                executorphone.Value = "Контактный телефон - " + tB_operatorTel.Text;
-            //            XElement executordate = executor.Element(ns + "executordate");
-            //            if (executordate != null)
-            //                executordate.Value = "";
-            //        }
-            //        XElement docstatus = container.Element(ns + "docstatus");
-            //        if (docstatus != null)
-            //        {
-            //            XElement datedocexecutor = docstatus.Element(ns + "datedocexecutor");
-            //            if (datedocexecutor != null)
-            //            {
-            //                datedocexecutor.Value = "";
-            //                datedocexecutor.Add(DateTime.Now.ToString("g"));
-            //            }
-            //        }
+                var executor = container.Element(ns + "executor");
+                executor?.Element(ns + "executorname")?.SetValue(operatorName);
+                executor?.Element(ns + "executorphone")?.SetValue(operatorPhone);
+                executor?.Element(ns + "executordate")?.SetValue(DateTime.Now.ToString("dd.MM.yyyy"));
 
-            //        #endregion
-            //    }
-            //    else
-            //    {
-            //        MessageBox.Show(@"Ошибка при формировании документа (Не удалось получить тег контейнера)",
-            //            @"Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            //        return false;
-            //    }
+                var docstatus = container.Element(ns + "docstatus");
+                docstatus?.Element(ns + "datedocexecutor")?.SetValue(DateTime.Now.ToString("g"));
 
-            //    XElement servinfo = body.Element(ns + "servinfo");
-            //    if (servinfo != null)
-            //    {
-            //        XElement signaturesxml = servinfo.Element(ns + "signaturesxml");
-            //        if (signaturesxml != null)
-            //        {
-            //            signaturesxml.Value = "";
-            //        }
-            //        XElement idgosuslug = servinfo.Element(ns + "idgosuslug");
-            //        if (idgosuslug == null)
-            //        {
-            //            idgosuslug = new XElement(
-            //                ns + "idgosuslug",
-            //                _idGosUslugi,
-            //                new XAttribute("style", "display: none !important;"));
-            //            servinfo.Add(idgosuslug);
-            //        }
-            //        else
-            //        {
-            //            idgosuslug.Value = _idGosUslugi;
-            //            idgosuslug.Add(new XAttribute("style", "display: none !important;"));
-            //        }
-            //    }
-            //    else
-            //    {
-            //        MessageBox.Show(@"Ошибка при формировании документа (Не удалось получить тег сервисной информации)",
-            //            @"Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            //        return false;
-            //    }
-            //}
-            //else
-            //{
-            //    MessageBox.Show(@"Ошибка при формировании документа (Не удалось получить тег body2)",
-            //        @"Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            //    return false;
-            //}
+                var reg = container.Element(ns + "reg");
+                reg?.Element(ns + "datareg")?.SetValue(DateTime.Now.ToString("dd.MM.yyyy"));
 
-            //try
-            //{
-            //    xdoc.Save(_path, SaveOptions.DisableFormatting);
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show(@"Не удалось сохранить документ: " + ex.Message, @"Ошибка",
-            //        MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            //    return false;
-            //}
+                var servinfo = body2.Element(ns + "servinfo");
+                if (servinfo != null)
+                {
+                    var idGos = servinfo.Element(ns + "idgosuslug");
+                    if (idGos == null)
+                    {
+                        servinfo.Add(new XElement(ns + "idgosuslug", idGosUslugi));
+                    }
+                    else
+                    {
+                        idGos.Value = idGosUslugi.ToString();
+                    }
 
-            return true;
+                    servinfo.Element(ns + "signaturesxml")?.SetValue(string.Empty);
+                    servinfo.Element(ns + "timestampout")?.SetValue(DateTime.Now.ToString("o"));
+                }
+
+                string tempFileName = $"answer_{_app.File.Name}";
+                string tempFilePath = Path.Combine(baseTempPath, tempFileName);
+                xdoc.Save(tempFilePath, SaveOptions.DisableFormatting);
+
+                string ftpFilePath = $"Applications/AnswerNeg/{tempFileName}";
+                await ftpContext.SaveFileAsync(ftpFilePath, tempFilePath);
+                await ftpContext.DisconnectAsync();
+
+                //if (File.Exists(tempFilePath))
+                //    File.Delete(tempFilePath);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при создании/загрузке HTMLX: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
         }
 
+        public async Task<Htmlx> LoadHtmlxFromFtpAsync(string remoteFtpPath)
+        {
+            try
+            {
+                string fileName = Path.GetFileName(remoteFtpPath);
+                string tempDir = Path.GetTempPath();
+                string tempPath = Path.Combine(tempDir, fileName);
+
+                if (!File.Exists(tempPath))
+                {
+                    await ftpContext.DownloadFileAsync(remoteFtpPath, tempPath);
+                }
+
+                XmlSerializer serializer = new XmlSerializer(typeof(Htmlx));
+                using (FileStream fs = new FileStream(tempPath, FileMode.Open))
+                {
+                    var htmlx = (Htmlx)serializer.Deserialize(fs);
+                    return htmlx;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при загрузке/десериализации XML: " + ex.Message);
+                return null;
+            }
+        }
 
         #region UpdateDb
 
