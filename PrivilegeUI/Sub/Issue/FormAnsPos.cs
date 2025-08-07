@@ -155,13 +155,6 @@ namespace PrivilegeUI.Sub.Issue
         /// <returns></returns>
         private async Task<bool> CreateDoc()
         {
-            //if (!WorkMethods.CheckStatus(_id, new[] { "3", "8", "9" }))
-            //{
-            //    MessageBox.Show(@"Этап принятия в работу уже выполнен", @"Внимание",
-            //        MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            //    return false;
-            //}
-
             if (!await GenerateHtmlxAndUploadAsync(fullApp.Body2.Servinfo.Idservice, fullApp.Body2.Servinfo.Nameservice, tB_fio.Text, tB_operator.Text, tB_operatorTel.Text))
                 return false;
 
@@ -246,7 +239,8 @@ namespace PrivilegeUI.Sub.Issue
                 xdoc.Save(tempFilePath, SaveOptions.DisableFormatting);
 
                 string ftpFilePath = $"Applications/AnswerPos/{tempFileName}";
-                await ftpContext.SaveFileAsync(ftpFilePath, tempFilePath);
+                string xmlcontent = await File.ReadAllTextAsync(tempFilePath);
+                await ftpContext.SaveFileAsync(ftpFilePath, xmlcontent);
                 await ftpContext.DisconnectAsync();
 
                 await UpdateAsync();

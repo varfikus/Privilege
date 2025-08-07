@@ -31,17 +31,20 @@ namespace PrivilegeUI
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             btn_exit = new Button();
             panelLogo = new Panel();
             labelHeader = new Label();
             pB_header = new PictureBox();
             lblTitleClildForm = new Label();
+            dGV = new PrivilegeUI.MyControls.DoubleBufferedDataGridView();
             panelMenu = new Panel();
             btn_cancel = new Button();
             btn_archive = new Button();
             btn_settings = new Button();
             btn_finaly = new Button();
+            btn_denial = new Button();
             btn_apply = new Button();
             btn_info = new Button();
             btn_refresh = new Button();
@@ -57,16 +60,15 @@ namespace PrivilegeUI
             lbl_add = new Label();
             label1 = new Label();
             panelDesktop = new Panel();
-            dGV = new PrivilegeUI.MyControls.DoubleBufferedDataGridView();
             timer_refresh = new System.Windows.Forms.Timer(components);
             panelLogo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pB_header).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dGV).BeginInit();
             panelMenu.SuspendLayout();
             panelTitle.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pB_CurrentChildForm).BeginInit();
             panelDown.SuspendLayout();
             panelDesktop.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dGV).BeginInit();
             SuspendLayout();
             // 
             // backgroundWorker1
@@ -147,6 +149,22 @@ namespace PrivilegeUI
             lblTitleClildForm.TabIndex = 1;
             lblTitleClildForm.Text = "Главный экран";
             // 
+            // dGV
+            // 
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = SystemColors.Window;
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle1.ForeColor = SystemColors.ControlText;
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.ControlDarkDark;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.False;
+            dGV.DefaultCellStyle = dataGridViewCellStyle1;
+            dGV.Dock = DockStyle.Fill;
+            dGV.Location = new Point(0, 0);
+            dGV.Name = "dGV";
+            dGV.Size = new Size(1124, 769);
+            dGV.TabIndex = 0;
+            // 
             // panelMenu
             // 
             panelMenu.BackColor = Color.FromArgb(60, 91, 116);
@@ -155,6 +173,7 @@ namespace PrivilegeUI
             panelMenu.Controls.Add(btn_settings);
             panelMenu.Controls.Add(btn_exit);
             panelMenu.Controls.Add(btn_finaly);
+            panelMenu.Controls.Add(btn_denial);
             panelMenu.Controls.Add(btn_apply);
             panelMenu.Controls.Add(btn_info);
             panelMenu.Controls.Add(btn_refresh);
@@ -176,7 +195,7 @@ namespace PrivilegeUI
             btn_cancel.ForeColor = Color.Gainsboro;
             btn_cancel.Image = Properties.Resources.cancel_subscription_white_40;
             btn_cancel.ImageAlign = ContentAlignment.MiddleLeft;
-            btn_cancel.Location = new Point(0, 401);
+            btn_cancel.Location = new Point(0, 470);
             btn_cancel.Margin = new Padding(4, 3, 4, 3);
             btn_cancel.Name = "btn_cancel";
             btn_cancel.Padding = new Padding(12, 0, 0, 0);
@@ -239,7 +258,7 @@ namespace PrivilegeUI
             btn_finaly.ForeColor = Color.Gainsboro;
             btn_finaly.Image = Properties.Resources.submit_document_white_40;
             btn_finaly.ImageAlign = ContentAlignment.MiddleLeft;
-            btn_finaly.Location = new Point(0, 332);
+            btn_finaly.Location = new Point(0, 401);
             btn_finaly.Margin = new Padding(4, 3, 4, 3);
             btn_finaly.Name = "btn_finaly";
             btn_finaly.Padding = new Padding(12, 0, 0, 0);
@@ -249,6 +268,27 @@ namespace PrivilegeUI
             btn_finaly.Text = "Выдать";
             btn_finaly.UseVisualStyleBackColor = true;
             btn_finaly.Click += btn_finaly_Click;
+            // 
+            // btn_denial
+            // 
+            btn_denial.Cursor = Cursors.Hand;
+            btn_denial.Dock = DockStyle.Top;
+            btn_denial.FlatAppearance.BorderSize = 0;
+            btn_denial.FlatStyle = FlatStyle.Flat;
+            btn_denial.Font = new Font("Arial Black", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 204);
+            btn_denial.ForeColor = Color.Gainsboro;
+            btn_denial.Image = Properties.Resources.decline;
+            btn_denial.ImageAlign = ContentAlignment.MiddleLeft;
+            btn_denial.Location = new Point(0, 332);
+            btn_denial.Margin = new Padding(4, 3, 4, 3);
+            btn_denial.Name = "btn_denial";
+            btn_denial.Padding = new Padding(12, 0, 0, 0);
+            btn_denial.Size = new Size(257, 69);
+            btn_denial.TabIndex = 13;
+            btn_denial.Tag = "Информация";
+            btn_denial.Text = "Отклонить";
+            btn_denial.UseVisualStyleBackColor = true;
+            btn_denial.Click += btn_denial_Click;
             // 
             // btn_apply
             // 
@@ -476,19 +516,6 @@ namespace PrivilegeUI
             panelDesktop.Size = new Size(1124, 769);
             panelDesktop.TabIndex = 11;
             // 
-            // dGV
-            // 
-            dGV.AllowUserToAddRows = false;
-            dGV.AllowUserToDeleteRows = false;
-            dGV.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dGV.Dock = DockStyle.Fill;
-            dGV.Location = new Point(0, 0);
-            dGV.Name = "dGV";
-            dGV.ReadOnly = true;
-            dGV.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dGV.Size = new Size(1124, 769);
-            dGV.TabIndex = 0;
-            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -504,13 +531,14 @@ namespace PrivilegeUI
             MinimumSize = new Size(1397, 802);
             Name = "FormMain";
             StartPosition = FormStartPosition.CenterParent;
-            Text = "Privilege";
+            Text = "Заявки АСОП";
             FormClosing += FormMain_FormClosing;
             FormClosed += FormMain_FormClosed;
             Shown += FormMain_Shown;
             panelLogo.ResumeLayout(false);
             panelLogo.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pB_header).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dGV).EndInit();
             panelMenu.ResumeLayout(false);
             panelTitle.ResumeLayout(false);
             panelTitle.PerformLayout();
@@ -518,7 +546,6 @@ namespace PrivilegeUI
             panelDown.ResumeLayout(false);
             panelDown.PerformLayout();
             panelDesktop.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)dGV).EndInit();
             ResumeLayout(false);
         }
 
@@ -552,5 +579,6 @@ namespace PrivilegeUI
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label lbl_time;
         private Button btn_apply;
+        private Button btn_denial;
     }
 }

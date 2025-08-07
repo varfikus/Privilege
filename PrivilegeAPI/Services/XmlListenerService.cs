@@ -16,16 +16,18 @@ namespace PrivilegeAPI.Services
         private readonly FtpService _ftpService;
         private readonly IHubContext<XmlProcessingHub> _hubContext;
         private readonly ILogger<XmlListenerService> _logger;
+        private readonly AnswerService _answerService;
         private readonly string _url = "http://+:5059/";
         private bool _isDisposing;
 
-        public XmlListenerService(IServiceScopeFactory scopeFactory, FtpService ftpService, IHubContext<XmlProcessingHub> hubContext, ILogger<XmlListenerService> logger)
+        public XmlListenerService(IServiceScopeFactory scopeFactory, FtpService ftpService, IHubContext<XmlProcessingHub> hubContext, ILogger<XmlListenerService> logger, AnswerService answerService)
         {
             _listener = new HttpListener();
             _scopeFactory = scopeFactory;
             _ftpService = ftpService;
             _hubContext = hubContext;
             _logger = logger;
+            _answerService = answerService;
             _isDisposing = false;
         }
 
@@ -110,7 +112,7 @@ namespace PrivilegeAPI.Services
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
                     string fileName = $"Application_{DateTime.Now:yyyyMMddHHmmss}.xml";
-                    string virtualPath = $"Applications/{fileName}";
+                    string virtualPath = $"Applications/New/{fileName}";
 
                     var file = new File
                     {
@@ -118,16 +120,23 @@ namespace PrivilegeAPI.Services
                         Path = virtualPath
                     };
 
-                    dbContext.Files.Add(file);
-                    await dbContext.SaveChangesAsync(cancellationToken); 
-
                     var application = ParseXml(xmlContent, file);
                     application.FileId = file.Id;
+
+                    await _ftpService.SaveFileAsync(virtualPath, xmlContent);
+
+                    dbContext.Files.Add(file);
+                    await dbContext.SaveChangesAsync(cancellationToken);
 
                     dbContext.Applications.Add(application);
                     await dbContext.SaveChangesAsync(cancellationToken);
 
-                    await _ftpService.SaveFileAsync(virtualPath, xmlContent);
+                    bool answer = _answerService.SendAnswerDeliveredAsync(application).Result;
+
+                    if (!answer)
+                    {
+                        throw new Exception("Failed to send reply.");
+                    }
 
                     await _hubContext.Clients.All.SendAsync(
                         "ReceiveMessage",

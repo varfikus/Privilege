@@ -8,11 +8,13 @@ namespace PrivilegeAPI.Models
         Add = 0,
         [Display(Name = "Отправлено уведомление о доставке")]
         Delivered = 1,
-        [Display(Name = "Принят в работу")]
+        [Display(Name = "Принята в работу")]
         Apply = 2,
+        [Display(Name = "Заявка отклонена")]
+        Denial = 3,
         [Display(Name = "Заявка отработана")]
-        Final = 3,
+        Final = 4,
         [Display(Name = "Отказ")]
-        DenialApply = 4
+        DenialFinal = 5
     }
 }

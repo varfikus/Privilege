@@ -10,6 +10,7 @@ using PrivilegeUI.Properties;
 using PrivilegeUI.Sub;
 using PrivilegeUI.Sub.Issue;
 using System.Data;
+using System.Windows.Forms;
 using Application = PrivilegeAPI.Models.Application;
 using HubConnection = Microsoft.AspNetCore.SignalR.Client.HubConnection;
 
@@ -203,6 +204,35 @@ namespace PrivilegeUI
                 MessageBox.Show("Заявка не найдена в списке.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
+
+            ActivateButton(sender);
+            OpenChildForm(new FormApply(_apiClient, app, this, true));
+        }
+
+        private void btn_denial_Click(object sender, EventArgs e)
+        {
+            if (dGV.CurrentRow == null)
+            {
+                MessageBox.Show("Выберите строку для отображения информации.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!int.TryParse(dGV.CurrentRow.Cells["id"].Value?.ToString(), out int id))
+            {
+                MessageBox.Show("Не удалось определить ID заявки.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var app = _applications?.FirstOrDefault(a => a.Id == id);
+
+            if (app == null)
+            {
+                MessageBox.Show("Заявка не найдена в списке.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ActivateButton(sender);
+            OpenChildForm(new FormApply(_apiClient, app, this, false));
         }
 
         private void btn_finaly_Click(object sender, EventArgs e)
@@ -310,43 +340,126 @@ namespace PrivilegeUI
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
 
             DataGridViewRow dgvr = dGV.Rows[e.RowIndex];
-            var cell = dgvr.Cells["StatusEnum"];
 
-            if (cell?.Value != null && Enum.TryParse(typeof(StatusEnum), cell.Value.ToString(), out object statusObj))
+            var enumCell = dgvr.Cells["StatusEnum"];
+
+            var displayCell = dgvr.Cells["Status"];
+
+            if (enumCell?.Value != null && displayCell != null &&
+                Enum.TryParse(typeof(StatusEnum), enumCell.Value.ToString(), out object statusObj))
             {
                 var status = (StatusEnum)statusObj;
-                cell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                displayCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
                 switch (status)
                 {
                     case StatusEnum.Add:
-                        cell.Style.BackColor = Color.Red;
-                        cell.Style.ForeColor = Color.Gold;
+                        displayCell.Style.BackColor = Color.LightGray;
+                        displayCell.Style.ForeColor = Color.Black;
                         break;
 
                     case StatusEnum.Delivered:
-                        cell.Style.BackColor = Color.CornflowerBlue;
-                        cell.Style.ForeColor = Color.Black;
+                        displayCell.Style.BackColor = Color.SteelBlue;
+                        displayCell.Style.ForeColor = Color.White;
                         break;
 
                     case StatusEnum.Apply:
-                        cell.Style.BackColor = Color.Yellow;
-                        cell.Style.ForeColor = Color.Black;
+                        displayCell.Style.BackColor = Color.Gold;
+                        displayCell.Style.ForeColor = Color.Black;
                         break;
 
                     case StatusEnum.Final:
-                        cell.Style.BackColor = Color.Green;
-                        cell.Style.ForeColor = Color.WhiteSmoke;
+                        displayCell.Style.BackColor = Color.ForestGreen;
+                        displayCell.Style.ForeColor = Color.White;
                         break;
 
-                    case StatusEnum.DenialApply:
-                        cell.Style.BackColor = Color.DeepSkyBlue;
-                        cell.Style.ForeColor = Color.Black;
+                    case StatusEnum.Denial:
+                        displayCell.Style.BackColor = Color.IndianRed;
+                        displayCell.Style.ForeColor = Color.White;
+                        break;
+
+                    case StatusEnum.DenialFinal:
+                        displayCell.Style.BackColor = Color.DarkRed;
+                        displayCell.Style.ForeColor = Color.White;
                         break;
 
                     default:
-                        cell.Style.BackColor = Color.White;
-                        cell.Style.ForeColor = Color.Black;
+                        displayCell.Style.BackColor = Color.White;
+                        displayCell.Style.ForeColor = Color.Black;
+                        break;
+                }
+            }
+        }
+
+        private void dGV_CellMove(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            DataGridViewRow dgvr = dGV.Rows[e.RowIndex];
+            var cell = dgvr.Cells["StatusEnum"];
+            var statusCell = dgvr.Cells["status"];
+
+            if (cell?.Value != null && Enum.TryParse(typeof(StatusEnum), cell.Value.ToString(), out object statusObj))
+            {
+                var status = (StatusEnum)statusObj;
+
+                btn_info.Visible = true;
+
+                switch (status)
+                {
+                    case StatusEnum.Delivered:
+                        btn_apply.Visible = true;
+                        btn_denial.Visible = true;
+                        btn_finaly.Visible = false;
+                        btn_cancel.Visible = false;
+                        statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
+                        statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
+                        break;
+
+                    case StatusEnum.Apply:
+                        btn_apply.Visible = false;
+                        btn_denial.Visible = false;
+                        btn_finaly.Visible = true;
+                        btn_cancel.Visible = true;
+                        statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
+                        statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
+                        break;
+
+                    case StatusEnum.Denial:
+                        btn_apply.Visible = false;
+                        btn_denial.Visible = false;
+                        btn_finaly.Visible = false;
+                        btn_cancel.Visible = true;
+                        statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
+                        statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
+                        break;
+
+                    case StatusEnum.Final:
+                        btn_apply.Visible = false;
+                        btn_denial.Visible = false;
+                        btn_finaly.Visible = false;
+                        btn_cancel.Visible = false;
+                        statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
+                        statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
+                        break;
+
+                    case StatusEnum.DenialFinal:
+                        btn_apply.Visible = false;
+                        btn_denial.Visible = false;
+                        btn_finaly.Visible = false;
+                        btn_cancel.Visible = false;
+                        statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
+                        statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
+                        break;
+
+                    default:
+                        btn_info.Visible = false;
+                        btn_apply.Visible = false;
+                        btn_denial.Visible = false;
+                        btn_finaly.Visible = false;
+                        btn_cancel.Visible = false;
+                        statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
+                        statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
                         break;
                 }
             }
@@ -357,6 +470,7 @@ namespace PrivilegeUI
             btn_cancel.Visible = show;
             btn_finaly.Visible = show;
             btn_apply.Visible = show;
+            btn_denial.Visible = show;
         }
 
         #endregion
@@ -469,6 +583,7 @@ namespace PrivilegeUI
             dGV.ReadOnly = true;
             dGV.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dGV.CellFormatting += dGV_CellFormatting;
+            dGV.CellEnter += dGV_CellMove;
             panelDesktop.Controls.Add(dGV);
 
             dGV.Columns.Add(new DataGridViewTextBoxColumn
@@ -520,6 +635,11 @@ namespace PrivilegeUI
             });
         }
 
+        private void DGV_CellEnter(object? sender, DataGridViewCellEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
         private async Task LoadApplicationsAsync()
         {
             try
@@ -535,8 +655,10 @@ namespace PrivilegeUI
                 var applications = response.Data;
 
                 var filteredApps = _isArchive
-                    ? applications.Where(app => app.Status == StatusEnum.Final || app.Status == StatusEnum.DenialApply)
-                    : applications.Where(app => app.Status != StatusEnum.Final && app.Status != StatusEnum.DenialApply);
+                    ? applications.Where(app =>
+                        (app.Status == StatusEnum.Final || app.Status == StatusEnum.DenialFinal) &&
+                        app.DateEdit <= DateTime.Now.AddDays(-30))
+                    : applications;
 
                 _applications = filteredApps.ToList();
 
@@ -588,7 +710,7 @@ namespace PrivilegeUI
             }
         }
 
-        
+
         public void ResetButton()
         {
             DisableButton();

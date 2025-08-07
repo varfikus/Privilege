@@ -135,7 +135,7 @@ namespace PrivilegeUI.Sub
             {
                 await DownloadAndOpenFile("Applications/AnswerPos/answer_" + _app.File.Name, false);
             }
-            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.DenialApply)
+            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.Denial)
             {
                 await DownloadAndOpenFile("Applications/AnswerNeg/answer_" + _app.File.Name, false);
             }
@@ -151,7 +151,7 @@ namespace PrivilegeUI.Sub
             {
                 await DownloadAndOpenFile("Applications/AnswerPos/answer_" + _app.File.Name, true);
             }
-            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.DenialApply)
+            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.Denial)
             {
                 await DownloadAndOpenFile("Applications/AnswerNeg/answer_" + _app.File.Name, true);
             }

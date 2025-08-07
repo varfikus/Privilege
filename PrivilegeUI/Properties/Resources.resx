@@ -136,6 +136,9 @@
   <data name="user_white_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\user_white_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="synchronize_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\synchronize_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="services_blue_961" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\services_blue_961.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -145,14 +148,14 @@
   <data name="database_blue_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\database_blue_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="cancel_subscription_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\cancel_subscription_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="view_white_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\view_white_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="services_blue_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\services_blue_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="go_back_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\go_back_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="ok_white_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ok_white_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -160,14 +163,17 @@
   <data name="settings_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\settings_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="security_password_2_white_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\security_password_2_white_icon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="go_back_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\go_back_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="info_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\info_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="marker_blue_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\marker_blue_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="web_address_blue_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\web_address_blue_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="update_left_rotation_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\update_left_rotation_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -183,6 +189,9 @@
   </data>
   <data name="user_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\user_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="synchronize_red_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\synchronize_red_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="submit_document_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\submit_document_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -211,22 +220,16 @@
   <data name="synchronize_red_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\synchronize_red_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="cancel_subscription_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\cancel_subscription_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="security_password_2_white_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\security_password_2_white_icon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="database_white_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\database_white_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="web_address_blue_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\web_address_blue_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="marker_white_96" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\marker_white_96.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="synchronize_red_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\synchronize_red_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="synchronize_white_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\synchronize_white_40.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="decline" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\decline.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

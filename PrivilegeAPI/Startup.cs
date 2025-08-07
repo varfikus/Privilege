@@ -71,7 +71,8 @@ public class Startup
         });
 
         services.AddSingleton<FtpService>();
-        
+        services.AddSingleton<AnswerService>();
+
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ITokenService, TokenService>();

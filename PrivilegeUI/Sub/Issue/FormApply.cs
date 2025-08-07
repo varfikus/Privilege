@@ -5,6 +5,11 @@ using PrivilegeAPI.Result;
 using PrivilegeAPI.Services;
 using PrivilegeUI.Classes;
 using PrivilegeUI.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Windows.Forms;
+using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using static PrivilegeUI.Models.FullApplication;
@@ -14,7 +19,7 @@ using FtpSettings = PrivilegeAPI.Services.FtpSettings;
 
 namespace PrivilegeUI.Sub.Issue
 {
-    public partial class FormAnsNeg : Form
+    public partial class FormApply : Form
     {
         #region Fields
 
@@ -27,21 +32,24 @@ namespace PrivilegeUI.Sub.Issue
         /// </summary>
         private readonly FormMain _parentForm;
         /// <summary>
-        /// Путь до исходящего документа
+        /// Текущая заявка 
         /// </summary>
-        private string _path;
         private Application _app;
         private Htmlx fullApp;
 
         private FtpSettings ftpSettings;
         private FtpService ftpContext;
+        /// <summary>
+        /// Флаг принятого документа (отказаного)
+        /// </summary>
+        private readonly bool _decision = true;
 
         #endregion
 
 
         #region Constructor
 
-        public FormAnsNeg(MyHttpClient apiClient, Application app, FormMain parentForm)
+        public FormApply(MyHttpClient apiClient, Application app, FormMain parentForm, bool decision = true)
         {
             InitializeComponent();
             ftpSettings = new FtpSettings
@@ -55,6 +63,15 @@ namespace PrivilegeUI.Sub.Issue
             _apiClient = apiClient;
             _app = app;
             _parentForm = parentForm;
+            _decision = decision;
+
+            if (!_decision)
+            {
+                lbl_denial.Visible = true;
+                tB_denial.Visible = true;
+                lbl_consid.Visible = false;
+                dTP_consid.Visible = false;
+            }
         }
 
         #endregion
@@ -62,7 +79,7 @@ namespace PrivilegeUI.Sub.Issue
 
         #region Events
 
-        private async void FormAnsNeg_Load(object sender, EventArgs e)
+        private async void FormApply_Load(object sender, EventArgs e)
         {
             try
             {
@@ -84,12 +101,15 @@ namespace PrivilegeUI.Sub.Issue
                 tB_operator.Text = UserInfo.CurrentUser.Name;
                 tB_service.Text = fullApp.Body2.Servinfo.Nameservice;
                 tB_fio.Text = $"{fullApp.Body2.Container.Topheader.Tophead.PersData.Fam} {fullApp.Body2.Container.Topheader.Tophead.PersData.Im} {fullApp.Body2.Container.Topheader.Tophead.PersData.Ot}";
-                dTP_dateOut.Value = DateTime.Now;
+                
+                dTP_consid.Value = DateTime.Now.AddDays(3);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Ошибка при загрузке заявки: " + ex.Message);
             }
+
+            
         }
 
         private async void btnOk_Click(object sender, EventArgs e)
@@ -97,7 +117,7 @@ namespace PrivilegeUI.Sub.Issue
             if (!Valid())
                 return;
 
-            bool ok = await CreateDoc();
+            bool ok = await CreateDocAsync();
             if (!ok)
                 return;
 
@@ -115,11 +135,10 @@ namespace PrivilegeUI.Sub.Issue
 
         private async void btn_preview_Click(object sender, EventArgs e)
         {
-            bool ok = await CreateDoc();
+            bool ok = await CreateDocAsync();
             if (!ok)
                 return;
         }
-
 
         #endregion
 
@@ -127,55 +146,20 @@ namespace PrivilegeUI.Sub.Issue
         #region Methods
 
         /// <summary>
-        /// Проверка заполнения полей
-        /// </summary>
-        /// <returns></returns>
-        private bool Valid()
-        {
-            bool f = true;
-
-            foreach (Control item in Controls)
-            {
-                if (item is Label) item.ForeColor = Color.Black;
-            }
-            toolTip1.RemoveAll();
-
-            if (tB_fio.Text == "")
-            {
-                string caption = "Это поле не может быть пустым";
-                lbl_fio.ForeColor = Color.Red;
-                toolTip1.SetToolTip(lbl_fio, caption);
-                toolTip1.SetToolTip(tB_fio, caption);
-                f = false;
-            }
-
-            if (tB_denial.Text == "")
-            {
-                string caption = "Это поле не может быть пустым";
-                lbl_denial.ForeColor = Color.Red;
-                toolTip1.SetToolTip(lbl_denial, caption);
-                toolTip1.SetToolTip(tB_denial, caption);
-                f = false;
-            }
-
-            return f;
-        }
-
-        /// <summary>
         /// Создать документ
         /// </summary>
         /// <returns></returns>
-        private async Task<bool> CreateDoc()
+        private async Task<bool> CreateDocAsync()
         {
-            //if (!WorkMethods.CheckStatus(_id, new[] { "3", "8", "9" }))
-            //{
-            //    MessageBox.Show(@"Этап принятия в работу уже выполнен", @"Внимание",
-            //        MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-            //    return false;
-            //}
-
-            if (!await GenerateHtmlxAndUploadAsync(fullApp.Body2.Servinfo.Idservice, fullApp.Body2.Servinfo.Nameservice, tB_fio.Text, tB_operator.Text, tB_operatorTel.Text, tB_denial.Text))
+            if (!await GenerateHtmlxAndUploadAsync(fullApp.Body2.Servinfo.Idservice, fullApp.Body2.Servinfo.Nameservice, tB_fio.Text, tB_operator.Text, tB_operatorTel.Text))
                 return false;
+
+            return true;
+        }
+
+        private bool Valid()
+        {
+
 
             return true;
         }
@@ -184,11 +168,11 @@ namespace PrivilegeUI.Sub.Issue
         /// Формирование документа
         /// </summary>
         /// <returns></returns>
-        public async Task<bool> GenerateHtmlxAndUploadAsync(int idGosUslugi, string service, string fio, string operatorName, string operatorPhone, string reason)
+        public async Task<bool> GenerateHtmlxAndUploadAsync(int idGosUslugi, string service, string fio, string operatorName, string operatorPhone)
         {
             try
             {
-                string baseTempPath = Path.Combine(Path.GetTempPath(), "Applications", "AnswerNeg");
+                string baseTempPath = Path.Combine(Path.GetTempPath(), "Applications", "AnswerPos");
                 Directory.CreateDirectory(baseTempPath);
 
                 string templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "template", "template.xml");
@@ -222,21 +206,40 @@ namespace PrivilegeUI.Sub.Issue
 
                     var styleAttr = new XAttribute("style", "text-indent: 0cm;");
 
-                    content.Add(new XElement(ns + "p", styleAttr, new XText("Уважаемый(ая) " + fio + ", ")));
-                    content.Add(new XElement(ns + "p", styleAttr, new XText("В соответствии с Вашим обращением по услуге \"" + service + "\".")));
-                    content.Add(new XElement(ns + "p", styleAttr, new XText("Ваша заявка отклонена по причине: \"" + reason + "\".")));
+                    if (_decision)
+                    {
+                        int day = dTP_consid.Value.Subtract(DateTime.Now).Days + 1;
+                        string dayStr = day == 0
+                            ? "сегодняшнего дня"
+                            : day + " " + GetDeclension(day, "дня", "дней", "дней");
+                        content.Add(
+                            new XElement(ns + "p",
+                                "Уважаемый(ая) " + tB_fio.Text +
+                                ". Ваше заявление на предоставление услуги «" +
+                                tB_service.Text +
+                                "» принято в работу. О результатах обработки Вы будете проинформированы в течении " +
+                                dayStr + ".")
+                        );
+                    }
+                    else
+                    {
+                        content.Add(
+                            new XElement(ns + "p",
+                                "Уважаемый(ая) " + tB_fio.Text +
+                                ". Вам отказано в принятии в работу Заявления на предоставление услуги «" +
+                                tB_service.Text + "» по причине " + tB_denial.Text + ".")
+                            );
+                    }
                 }
 
                 var executor = container.Element(ns + "executor");
                 executor?.Element(ns + "executorname")?.SetValue(operatorName);
                 executor?.Element(ns + "executorphone")?.SetValue(operatorPhone);
-                executor?.Element(ns + "executordate")?.SetValue(DateTime.Now.ToString("dd.MM.yyyy"));
+                executor?.Element(ns + "executordate")?.SetValue(DateTime.Now.ToShortDateString());
 
                 var docstatus = container.Element(ns + "docstatus");
-                docstatus?.Element(ns + "datedocexecutor")?.SetValue(DateTime.Now.ToString("g"));
 
                 var reg = container.Element(ns + "reg");
-                reg?.Element(ns + "datareg")?.SetValue(DateTime.Now.ToString("dd.MM.yyyy"));
 
                 var servinfo = body2.Element(ns + "servinfo");
                 if (servinfo != null)
@@ -255,14 +258,28 @@ namespace PrivilegeUI.Sub.Issue
                     servinfo.Element(ns + "timestampout")?.SetValue(DateTime.Now.ToString("o"));
                 }
 
-                string tempFileName = $"answer_{_app.File.Name}";
-                string tempFilePath = FileHelper.PrepareTempFilePath(tempFileName);
-                xdoc.Save(tempFilePath, SaveOptions.DisableFormatting);
+                if (_decision)
+                {
+                    string tempFileName = $"answer_{_app.File.Name}";
+                    string tempFilePath = FileHelper.PrepareTempFilePath(tempFileName);
+                    xdoc.Save(tempFilePath, SaveOptions.DisableFormatting);
 
-                string ftpFilePath = $"Applications/AnswerNeg/{tempFileName}";
-                string xmlcontent = await File.ReadAllTextAsync(tempFilePath);
-                await ftpContext.SaveFileAsync(ftpFilePath, xmlcontent);
-                await ftpContext.DisconnectAsync();
+                    string ftpFilePath = $"Applications/Apply/{tempFileName}";
+                    string xmlcontent = await File.ReadAllTextAsync(tempFilePath);
+                    await ftpContext.SaveFileAsync(ftpFilePath, xmlcontent);
+                    await ftpContext.DisconnectAsync();
+                }
+                else
+                {
+                    string tempFileName = $"answer_{_app.File.Name}";
+                    string tempFilePath = FileHelper.PrepareTempFilePath(tempFileName);
+                    xdoc.Save(tempFilePath, SaveOptions.DisableFormatting);
+
+                    string ftpFilePath = $"Applications/Denial/{tempFileName}";
+                    string xmlcontent = await File.ReadAllTextAsync(tempFilePath);
+                    await ftpContext.SaveFileAsync(ftpFilePath, xmlcontent);
+                    await ftpContext.DisconnectAsync();
+                }
 
                 await UpdateAsync();
 
@@ -300,21 +317,35 @@ namespace PrivilegeUI.Sub.Issue
                 return null;
             }
         }
+        
 
         #region UpdateDb
 
-        ///// <summary>
-        ///// Обновление данных
-        ///// </summary>
+        /// <summary>
+        /// Обновление данных
+        /// </summary>
         private async Task<bool> UpdateAsync()
         {
             try
             {
-                ApplicationDto applicationDto = new ApplicationDto
+                ApplicationDto applicationDto;
+
+                if (_decision)
                 {
-                    Id = _app.Id,
-                    Status = StatusEnum.DenialFinal
-                };
+                    applicationDto = new ApplicationDto
+                    {
+                        Id = _app.Id,
+                        Status = StatusEnum.Apply
+                    };
+                }
+                else
+                {
+                    applicationDto = new ApplicationDto
+                    {
+                        Id = _app.Id,
+                        Status = StatusEnum.Denial
+                    };
+                }
 
                 var result = await _apiClient.PutAsync<ApplicationDto, BaseResult<ApplicationDto>>("api/applications", applicationDto);
 
@@ -334,6 +365,38 @@ namespace PrivilegeUI.Sub.Issue
         }
 
         #endregion
+
+
+        /// <summary>
+        /// Возвращает слова в падеже, зависимом от заданного числа 
+        /// </summary>
+        /// <param name="number">Число от которого зависит выбранное слово</param>
+        /// <param name="nominativ">Именительный падеж слова. Например "день"</param>
+        /// <param name="genetiv">Родительный падеж слова. Например "дня"</param>
+        /// <param name="plural">Множественное число слова. Например "дней"</param>
+        /// <returns></returns>
+        public static string GetDeclension(int number, string nominativ, string genetiv, string plural)
+        {
+            number = number % 100;
+            if (number >= 11 && number <= 19)
+            {
+                return plural;
+            }
+
+            var i = number % 10;
+            switch (i)
+            {
+                case 1:
+                    return nominativ;
+                case 2:
+                case 3:
+                case 4:
+                    return genetiv;
+                default:
+                    return plural;
+            }
+
+        }
 
         #endregion
     }
