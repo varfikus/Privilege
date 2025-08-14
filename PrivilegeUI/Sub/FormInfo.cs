@@ -39,6 +39,8 @@ namespace PrivilegeUI.Sub
             _app = app;
             _orderId = _app.Id;
             _parentForm = parentForm;
+
+            UpdateButtonsVisibility();
         }
 
         #endregion
@@ -111,22 +113,58 @@ namespace PrivilegeUI.Sub
 
         private async void btn_fileApplyDownload_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile(_app.File.Path, false);
+            if (_app.Status == PrivilegeAPI.Models.StatusEnum.Apply || _app.Status == PrivilegeAPI.Models.StatusEnum.Final || _app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
+            {
+                await DownloadAndOpenFile("Applications/Apply/answer_" + _app.File.Name, false);
+            }
+            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.Denial || _app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
+            {
+                await DownloadAndOpenFile("Applications/Denial/answer_" + _app.File.Name, false);
+            }
+            else
+            {
+                MessageBox.Show("Невозможно загрузить файл, так как заявка не завершена.");
+            }
         }
 
         private async void btn_fileApplyOpen_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile(_app.File.Path, true);
+            if (_app.Status == PrivilegeAPI.Models.StatusEnum.Apply || _app.Status == PrivilegeAPI.Models.StatusEnum.Final || _app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
+            {
+                await DownloadAndOpenFile("Applications/Apply/answer_" + _app.File.Name, true);
+            }
+            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.Denial ||_app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
+            {
+                await DownloadAndOpenFile("Applications/Denial/answer_" + _app.File.Name, true);
+            }
+            else
+            {
+                MessageBox.Show("Невозможно открыть файл, так как заявка не завершена.");
+            }
         }
 
         private async void btn_fileArrivedDownload_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile(_app.File.Path, false);
+            try
+            {
+                await DownloadAndOpenFile("Applications/Reply/answer_" + _app.File.Name, false);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при загрузке файла: {ex.Message}");
+            }
         }
 
         private async void btn_fileArrivedOpen_Click(object sender, EventArgs e)
         {
-            await DownloadAndOpenFile(_app.File.Path, true);
+            try
+            {
+                await DownloadAndOpenFile("Applications/Reply/answer_" + _app.File.Name, true);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при открытии файла: {ex.Message}");
+            }
         }
 
         private async void btn_fileFinalyDownload_Click(object sender, EventArgs e)
@@ -135,7 +173,7 @@ namespace PrivilegeUI.Sub
             {
                 await DownloadAndOpenFile("Applications/AnswerPos/answer_" + _app.File.Name, false);
             }
-            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.Denial)
+            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
             {
                 await DownloadAndOpenFile("Applications/AnswerNeg/answer_" + _app.File.Name, false);
             }
@@ -151,7 +189,7 @@ namespace PrivilegeUI.Sub
             {
                 await DownloadAndOpenFile("Applications/AnswerPos/answer_" + _app.File.Name, true);
             }
-            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.Denial)
+            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
             {
                 await DownloadAndOpenFile("Applications/AnswerNeg/answer_" + _app.File.Name, true);
             }
@@ -233,6 +271,60 @@ namespace PrivilegeUI.Sub
 
 
         #region Methods
+
+        private void UpdateButtonsVisibility()
+        {
+            switch (_app.Status)
+            {
+                case PrivilegeAPI.Models.StatusEnum.Apply:
+                    btn_fileApplyDownload.Visible = true;
+                    btn_fileApplyOpen.Visible = true;
+                    btn_fileFinalyDownload.Visible = false;
+                    btn_fileFinalyOpen.Visible = false;
+                    lbl_finaly.Visible = false;
+                    break;
+
+                case PrivilegeAPI.Models.StatusEnum.Denial:
+                    btn_fileApplyDownload.Visible = true;
+                    btn_fileApplyOpen.Visible = true;
+                    btn_fileFinalyDownload.Visible = false;
+                    btn_fileFinalyOpen.Visible = false;
+                    lbl_apply.Text = "Отклонение заявки";
+                    lbl_finaly.Visible = false;
+                    break;
+
+                case PrivilegeAPI.Models.StatusEnum.DenialFinal:
+                    btn_fileApplyDownload.Visible = true;
+                    btn_fileApplyOpen.Visible = true;
+                    btn_fileFinalyDownload.Visible = true;
+                    btn_fileFinalyOpen.Visible = true;
+                    break;
+
+                case PrivilegeAPI.Models.StatusEnum.Final:
+                    btn_fileApplyDownload.Visible = true;
+                    btn_fileApplyOpen.Visible = true;
+                    btn_fileFinalyDownload.Visible = true;
+                    btn_fileFinalyOpen.Visible = true;
+                    break;
+
+                case PrivilegeAPI.Models.StatusEnum.Delivered:
+                    btn_fileApplyDownload.Visible = false;
+                    btn_fileApplyOpen.Visible = false;
+                    btn_fileFinalyDownload.Visible = false;
+                    btn_fileFinalyOpen.Visible = false;
+                    lbl_finaly.Visible = false;
+                    lbl_apply.Visible = false;
+                    break;
+                default:
+                    btn_fileApplyDownload.Visible = false;
+                    btn_fileApplyOpen.Visible = false;
+                    btn_fileArrivedDownload.Visible = false;
+                    btn_fileArrivedOpen.Visible = false;
+                    btn_fileFinalyDownload.Visible = false;
+                    btn_fileFinalyOpen.Visible = false;
+                    break;
+            }
+        }
 
         public async Task<Htmlx> LoadHtmlxFromFtpAsync(string remoteFtpPath)
         {

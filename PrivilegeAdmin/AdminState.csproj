@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common\StateAdministration.Domain.Base\StateAdministration.Domain.Base.csproj" />
+    <ProjectReference Include="..\Common\StateAdministration.Domain.Settings\StateAdministration.Domain.Settings.csproj" />
+    <ProjectReference Include="..\Common\StateAdministration.Domain\StateAdministration.Domain.csproj" />
+    <ProjectReference Include="..\Common\StateAdministration.XmlElectronicDocument\StateAdministration.XmlElectronicDocument.csproj" />
+    <ProjectReference Include="..\Data\StateAdministration.DAL\StateAdministration.DAL.csproj" />
+    <ProjectReference Include="..\Data\StateAdministration.FTP\StateAdministration.FTP.csproj" />
+    <ProjectReference Include="..\Services\StateAdministration.API\StateAdministration.API.csproj" />
+    <ProjectReference Include="..\Services\StateAdministration.Application\StateAdministration.Application.csproj" />
+    <ProjectReference Include="..\Services\StateAdministration.Interfaces\StateAdministration.Interfaces.csproj" />
+    <ProjectReference Include="..\Services\StateAdministration.WebApiClient\StateAdministration.WebApiClient.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resource.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resource.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resource.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

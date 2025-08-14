@@ -101,11 +101,35 @@ namespace PrivilegeAPI.Services
                 var clientIp = request.RemoteEndPoint?.Address.ToString();
                 _logger.LogInformation("Received request from {ClientIp}", clientIp);
 
-                if (request.HttpMethod == "POST" &&
-                    (request.ContentType == "text/xml" || request.ContentType == "application/xml"))
+                if (request.HttpMethod == "POST" && (request.ContentType == "multipart/form-data" || request.ContentType == "application/xml" || request.ContentType == "application/json" || request.ContentType == "text/plain"))
                 {
                     using var reader = new StreamReader(request.InputStream, request.ContentEncoding);
-                    var xmlContent = await reader.ReadToEndAsync(cancellationToken);
+                    var body = await reader.ReadToEndAsync(cancellationToken);
+
+                    string xmlContent;
+
+                    if (request.ContentType == "application/json")
+                    {
+                        var json = System.Text.Json.JsonDocument.Parse(body);
+                        if (!json.RootElement.TryGetProperty("base64Content", out var base64Element))
+                        {
+                            throw new Exception("Поле base64Content не найдено в JSON.");
+                        }
+
+                        var base64 = base64Element.GetString();
+                        if (string.IsNullOrWhiteSpace(base64))
+                        {
+                            throw new Exception("base64Content пустой.");
+                        }
+
+                        byte[] xmlBytes = Convert.FromBase64String(base64);
+                        xmlContent = Encoding.UTF8.GetString(xmlBytes);
+                    }
+                    else
+                    {
+                        xmlContent = body;
+                    }
+
                     _logger.LogDebug("Received XML: {XmlContent}", xmlContent);
 
                     using var scope = _scopeFactory.CreateScope();

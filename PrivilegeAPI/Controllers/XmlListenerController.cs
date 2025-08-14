@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.SignalR;
 using PrivilegeAPI.Context;
 using PrivilegeAPI.Hubs;
 using PrivilegeAPI.Models;
+using PrivilegeAPI.Services;
+using System.Text;
+using System.Threading;
 using System.Xml.Linq;
 
 namespace PrivilegeAPI.Controllers
@@ -13,11 +16,15 @@ namespace PrivilegeAPI.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<XmlProcessingHub> _hubContext;
+        private readonly FtpService _ftpService;
+        private readonly AnswerService _answerService;
 
-        public XmlListenerController(ApplicationDbContext context, IHubContext<XmlProcessingHub> hubContext)
+        public XmlListenerController(ApplicationDbContext context, IHubContext<XmlProcessingHub> hubContext, FtpService ftpService, AnswerService answerService)
         {
             _context = context;
             _hubContext = hubContext;
+            _ftpService = ftpService;
+            _answerService = answerService;
         }
 
         //[HttpPost]
@@ -48,20 +55,32 @@ namespace PrivilegeAPI.Controllers
         //}
 
         [HttpPost]
-        [Consumes("text/xml", "application/xml")]
-        public async Task<IActionResult> ReceiveXml([FromBody] string xmlContent)
+        [Consumes("application/json", "text/plain")]
+        public async Task<IActionResult> ReceiveXml([FromBody] Base64XmlRequest request)
         {
             var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
 
+            if (string.IsNullOrWhiteSpace(request.Base64Content))
+            {
+                return BadRequest(new { Error = "Данные не были переданы или пустые." });
+            }
+
             try
             {
+                byte[] xmlBytes = Convert.FromBase64String(request.Base64Content);
+                string xmlContent = Encoding.UTF8.GetString(xmlBytes);
+
+                var fileName = $"Application_{DateTime.Now:yyyyMMddHHmmss}.xml";
+                var filePath = $"Applications/New/{fileName}";
+
                 var file = new Models.File
                 {
-                    Name = $"file_{DateTime.Now:yyyyMMdd_HHmmss}.xml",
-                    Path = "/virtual/path",
+                    Name = fileName,
+                    Path = filePath
                 };
 
-                _context.Files.Add(file); 
+                await _ftpService.SaveFileAsync(file.Path, xmlContent);
+                _context.Files.Add(file);
                 await _context.SaveChangesAsync();
 
                 var application = ParseXml(xmlContent, file);
@@ -70,7 +89,15 @@ namespace PrivilegeAPI.Controllers
                 _context.Applications.Add(application);
                 await _context.SaveChangesAsync();
 
-                await _hubContext.Clients.All.SendAsync("ReceiveMessage", $"XML processed from {clientIp}. ApplicationId: {application.Id}");
+                bool answer = _answerService.SendAnswerDeliveredAsync(application).Result;
+
+                if (!answer)
+                {
+                    throw new Exception("Failed to send reply.");
+                }
+
+                await _hubContext.Clients.All.SendAsync("ReceiveMessage",
+                    $"XML processed from {clientIp}. ApplicationId: {application.Id}");
 
                 return Ok(new
                 {
@@ -78,9 +105,13 @@ namespace PrivilegeAPI.Controllers
                     ApplicationId = application.Id
                 });
             }
+            catch (FormatException)
+            {
+                return BadRequest(new { Error = "Передана некорректная base64-строка." });
+            }
             catch (Exception ex)
             {
-                return BadRequest(new { Error = $"Error processing XML: {ex.Message}" });
+                return BadRequest(new { Error = $"Ошибка обработки XML: {ex.Message}" });
             }
         }
 

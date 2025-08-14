@@ -84,7 +84,10 @@ public class Startup
         {
             options.AddPolicy("AllowSpecificOrigin", builder =>
             {
-                builder.WithOrigins("https://localhost:7227", "https://192.168.1.100:7227")
+                builder.WithOrigins(
+                    "http://192.168.69.236:5000",
+                    "https://192.168.69.236:7227"
+                )
                        .AllowAnyMethod()
                        .AllowAnyHeader()
                        .AllowCredentials();

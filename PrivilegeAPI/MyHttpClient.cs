@@ -143,6 +143,14 @@ namespace PrivilegeAPI
             return await GetIsSuccessJsonFromResponse<TResponse>(response, cancel).ConfigureAwait(false);
         }
 
+        public async Task<T?> PostAsync<T>(string url, HttpContent content, CancellationToken cancel = default)
+        {
+            var response = await _client.PostAsync(url, content, cancel);
+            LastCode = response.StatusCode;
+            LastContent = await response.Content.ReadAsStringAsync(cancel);
+            return await GetIsSuccessJsonFromResponse<T>(response, cancel);
+        }
+
         /// <summary>
         /// Асинхронный Put-запрос
         /// </summary>

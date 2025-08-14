@@ -5,12 +5,15 @@ using PrivilegeAPI.Dto;
 using PrivilegeAPI.Models;
 using PrivilegeAPI.Result;
 using PrivilegeUI.Classes;
+using PrivilegeUI.Classes.Json;
+using PrivilegeUI.Classes.Json.Sub;
 using PrivilegeUI.Models;
 using PrivilegeUI.Properties;
 using PrivilegeUI.Sub;
 using PrivilegeUI.Sub.Issue;
+using PrivilegeUI.Update;
 using System.Data;
-using System.Windows.Forms;
+using System.Net;
 using Application = PrivilegeAPI.Models.Application;
 using HubConnection = Microsoft.AspNetCore.SignalR.Client.HubConnection;
 
@@ -21,7 +24,7 @@ namespace PrivilegeUI
         #region Fields
 
         private HubConnection _hubConnection;
-        private readonly string _apiBaseUrl = "https://localhost:7227";
+        private readonly string _apiBaseUrl = "http://192.168.69.236:5000";
         private readonly HttpClient _httpClient;
         private System.Timers.Timer _connectionCheckTimer;
         /// <summary>
@@ -635,11 +638,6 @@ namespace PrivilegeUI
             });
         }
 
-        private void DGV_CellEnter(object? sender, DataGridViewCellEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
         private async Task LoadApplicationsAsync()
         {
             try
@@ -677,11 +675,30 @@ namespace PrivilegeUI
                 }
 
                 dGV.ClearSelection();
+
+                CountApplications();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при загрузке заявок: {ex.Message}\nStackTrace: {ex.StackTrace}");
             }
+        }
+
+        private void CountApplications()
+        {
+            if (_applications == null || _applications.Count == 0)
+            {
+                lbl_add.Text = "0";
+                lbl_apply.Text = "0";
+                return;
+            }
+
+            var newCount = _applications.Count(app => app.Status == StatusEnum.Delivered);
+
+            var waitingCount = _applications.Count(app => app.Status == StatusEnum.Apply);
+
+            lbl_add.Text = newCount.ToString();
+            lbl_apply.Text = waitingCount.ToString();
         }
 
         #endregion
@@ -746,6 +763,96 @@ namespace PrivilegeUI
 
         #endregion
 
+
+        #region Update
+
+        /// <summary>
+        /// Выполнение GET запроса
+        /// </summary>
+        /// <param name="url">Адрес ресурса</param>
+        /// <returns>Ответ на запрос</returns>
+        public static string GetNewVersion(string url)
+        {
+            try
+            {
+                WebRequest req = WebRequest.Create(url);
+                WebResponse resp = req.GetResponse();
+                System.IO.Stream stream = resp.GetResponseStream();
+                System.IO.StreamReader sr = new System.IO.StreamReader(stream);
+                string outText = sr.ReadToEnd();
+                sr.Close();
+                return outText;
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        /// <summary>
+        /// Проверить наличие новой версии
+        /// </summary>
+        /// <param name="search"></param>
+        private void CheckUpdate(bool search)
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol =
+                    SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+
+                string verJson = GetNewVersion("https://gupcit.com/data/update/mineconom/client/" + "version.json");
+                if (verJson == "")
+                {
+                    if (search)
+                        MessageBox.Show(@"Пустой ответ от сервера обновлений. Возможно сервер обновлений недоступен.",
+                            @"Внимание", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                JsonUpdate json = JsonWorker.DeserializVersion(verJson);
+                if (json == null)
+                {
+                    MessageBox.Show(@"Не удалось преобразовать скачанный файл с версией", @"Внимание",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                Version updaiteVersion = new Version(json.Version);
+                Version curentVersion = new Version(System.Windows.Forms.Application.ProductVersion);
+
+                if (updaiteVersion > curentVersion)
+                {
+                    ChangeNewImage();
+
+                    if (!json.Critical && search == true)
+                        new FormUpdateNew(json.Version) { Owner = this }.ShowDialog();
+                    else if (json.Critical)
+                        new FormUpdateCritical(json.Version) { Owner = this }.ShowDialog();
+                }
+                else
+                {
+                    if (search)
+                        MessageBox.Show(@"Новая версия не найдена");
+                }
+            }
+            catch
+            {
+                if (search)
+                    MessageBox.Show(@"Сервер обновлений временно недоступен");
+            }
+
+        }
+
+        /// <summary>
+        /// Поменять картинку при наличии нового обновления
+        /// </summary>
+        private void ChangeNewImage()
+        {
+            //toolTip1.SetToolTip(this.btnUpdate_, "Доступна новая версия программы!");
+            btn_update.BackgroundImage = Properties.Resources.synchronize_red_96;
+        }
+
+        #endregion
 
         #endregion
     }

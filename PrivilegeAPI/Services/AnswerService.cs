@@ -1,7 +1,13 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿ using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using PrivilegeAPI.Hubs;
 using PrivilegeAPI.Models;
+using PrivilegeAPI.Result;
+using System.IO;
 using System.Net;
+using System.Security.Cryptography.Xml;
+using System.Security.Policy;
+using System.Text;
 using System.Xml.Linq;
 using File = System.IO.File;
 
@@ -74,12 +80,27 @@ namespace PrivilegeAPI.Services
                 await _ftpService.SaveFileAsync(ftpFilePath, xdoc.ToString());
                 await _ftpService.DisconnectAsync();
 
+                await SendDocumentAsync("https://uslugi.gospmr.org/serviceresponse.php", xdoc.ToString());
+
                 return true;
             }
             catch (Exception ex)
             {
                 return false;
             }
-        }   
+        }
+
+        public async Task SendDocumentAsync(string url, string fileContent)
+        {
+            using var httpClient = new HttpClient();
+            var _apiClient = new MyHttpClient(httpClient);
+
+            using var form = new MultipartFormDataContent();
+
+            var fileBytes = Encoding.UTF8.GetBytes(fileContent);
+            form.Add(new ByteArrayContent(fileBytes), "document", "Уведомление.xml");
+
+            var result = await _apiClient.PostAsync<BaseResult<string>>(url, form);
+        }
     }
 }

@@ -12,7 +12,7 @@ namespace PrivilegeAPI
             using (var scope = host.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                dbContext.Database.Migrate();
+                //dbContext.Database.Migrate();
             }
 
             var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
@@ -30,7 +30,7 @@ namespace PrivilegeAPI
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>()
-                              .UseUrls("https://0.0.0.0:7227")
+                              .UseUrls("http://0.0.0.0:5000")
                               .ConfigureLogging(logging =>
                               {
                                   logging.AddConsole();

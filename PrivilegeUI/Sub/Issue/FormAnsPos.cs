@@ -81,6 +81,7 @@ namespace PrivilegeUI.Sub.Issue
                 }
 
                 tB_operator.Text = UserInfo.CurrentUser.Name;
+                tB_operatorTel.Text = Properties.Settings.Default.UserTel;
                 tB_service.Text = fullApp.Body2.Servinfo.Nameservice;
                 tB_fio.Text = $"{fullApp.Body2.Container.Topheader.Tophead.PersData.Fam} {fullApp.Body2.Container.Topheader.Tophead.PersData.Im} {fullApp.Body2.Container.Topheader.Tophead.PersData.Ot}";
             }
@@ -155,6 +156,12 @@ namespace PrivilegeUI.Sub.Issue
         /// <returns></returns>
         private async Task<bool> CreateDoc()
         {
+            if (_app.Status != StatusEnum.Apply || _app.Status == StatusEnum.Final || _app.Status == StatusEnum.DenialFinal || _app.Status == StatusEnum.Delivered)
+            {
+                MessageBox.Show("Вы не можете выдать эту заявку.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
             if (!await GenerateHtmlxAndUploadAsync(fullApp.Body2.Servinfo.Idservice, fullApp.Body2.Servinfo.Nameservice, tB_fio.Text, tB_operator.Text, tB_operatorTel.Text))
                 return false;
 

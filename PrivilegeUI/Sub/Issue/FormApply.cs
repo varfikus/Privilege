@@ -99,6 +99,7 @@ namespace PrivilegeUI.Sub.Issue
                 }
 
                 tB_operator.Text = UserInfo.CurrentUser.Name;
+                tB_operatorTel.Text = Properties.Settings.Default.UserTel;
                 tB_service.Text = fullApp.Body2.Servinfo.Nameservice;
                 tB_fio.Text = $"{fullApp.Body2.Container.Topheader.Tophead.PersData.Fam} {fullApp.Body2.Container.Topheader.Tophead.PersData.Im} {fullApp.Body2.Container.Topheader.Tophead.PersData.Ot}";
                 
@@ -151,6 +152,16 @@ namespace PrivilegeUI.Sub.Issue
         /// <returns></returns>
         private async Task<bool> CreateDocAsync()
         {
+            if (_app.Status != StatusEnum.Delivered)
+            {
+                string errorMessage = _decision
+                    ? "Заявка уже принята в работу"
+                    : "Заявка уже отклонена";
+
+                MessageBox.Show(errorMessage, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
             if (!await GenerateHtmlxAndUploadAsync(fullApp.Body2.Servinfo.Idservice, fullApp.Body2.Servinfo.Nameservice, tB_fio.Text, tB_operator.Text, tB_operatorTel.Text))
                 return false;
 
@@ -227,7 +238,7 @@ namespace PrivilegeUI.Sub.Issue
                             new XElement(ns + "p",
                                 "Уважаемый(ая) " + tB_fio.Text +
                                 ". Вам отказано в принятии в работу Заявления на предоставление услуги «" +
-                                tB_service.Text + "» по причине " + tB_denial.Text + ".")
+                                tB_service.Text + "» по причине: " + tB_denial.Text + ".")
                             );
                     }
                 }
