@@ -24,7 +24,8 @@ namespace PrivilegeUI
         #region Fields
 
         private HubConnection _hubConnection;
-        private readonly string _apiBaseUrl = "http://192.168.69.236:5000";
+        //private readonly string _apiBaseUrl = "http://192.168.69.236:5000";
+        private readonly string _apiBaseUrl = "http://localhost:5000";
         private readonly HttpClient _httpClient;
         private System.Timers.Timer _connectionCheckTimer;
         /// <summary>
@@ -43,10 +44,12 @@ namespace PrivilegeUI
         /// Текущая таблица "архивная"?
         /// </summary>
         private bool _isArchive = false;
+        private bool _isError = false;
         private MyHttpClient _apiClient;
         private readonly int _userId;
 
         private List<Application> _applications;
+        private List<DeniedApplication> _deniedApplications;
 
         #endregion
 
@@ -336,6 +339,36 @@ namespace PrivilegeUI
         private void btn_update_Click(object sender, EventArgs e)
         {
             //CheckUpdate(true);
+        }
+
+        private void btn_error_Click(object sender, EventArgs e)
+        {
+            if (_currentChildForm != null)
+            {
+                if (MessageBox.Show(@"Закрыть предыдущее окно?", @"Внимание",
+                    MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    ResetButton();
+                else
+                    return;
+            }
+
+            timer_refresh.Stop();
+            if (_isError)
+            {
+                lblTitleClildForm.Text = @"Главный экран";
+                pB_CurrentChildForm.Image = Properties.Resources.home_white_96;
+                _isError = false;
+                ShowButtons(true);
+            }
+            else
+            {
+                lblTitleClildForm.Text = @"Отклоненые документы";
+                pB_CurrentChildForm.Image = Properties.Resources.warning1;
+                _isError = true;
+                ShowButtons(false);
+            }
+            LoadApplications();
+            timer_refresh.Start();
         }
 
         private void dGV_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
@@ -640,47 +673,94 @@ namespace PrivilegeUI
 
         private async Task LoadApplicationsAsync()
         {
-            try
+            if (_isError)
             {
-                var response = await _apiClient.GetAsync<CollectionResult<Application>>("api/applications");
-
-                if (response == null || !response.IsSuccess || response.Data == null)
+                try
                 {
-                    MessageBox.Show($"Ошибка загрузки данных: {response?.ErrorMessage ?? "Неизвестная ошибка"}");
-                    return;
+                    var response = await _apiClient.GetAsync<CollectionResult<DeniedApplication>>("api/deniedapplications");
+
+                    if (response == null || !response.IsSuccess || response.Data == null)
+                    {
+                        MessageBox.Show($"Ошибка загрузки данных: {response?.ErrorMessage ?? "Неизвестная ошибка"}");
+                        return;
+                    }
+
+                    var applications = response.Data;
+
+                    var filteredApps = _isArchive
+                        ? applications.Where(app =>
+                            (app.Status == DenyStatus.Delivered))
+                        : applications;
+
+                    _deniedApplications = filteredApps.ToList();
+
+                    dGV.Rows.Clear();
+
+                    foreach (var app in _deniedApplications)
+                    {
+                        dGV.Rows.Add(
+                            app.Id,
+                            app.Name,
+                            EnumHelper.GetEnumDisplayName(app.Status),
+                            app.Status,
+                            app.DateAdd,
+                            app.DateEdit
+                        );
+                    }
+
+                    dGV.ClearSelection();
+
+                    CountApplications();
                 }
-
-                var applications = response.Data;
-
-                var filteredApps = _isArchive
-                    ? applications.Where(app =>
-                        (app.Status == StatusEnum.Final || app.Status == StatusEnum.DenialFinal) &&
-                        app.DateEdit <= DateTime.Now.AddDays(-30))
-                    : applications;
-
-                _applications = filteredApps.ToList();
-
-                dGV.Rows.Clear();
-
-                foreach (var app in _applications)
+                catch (Exception ex)
                 {
-                    dGV.Rows.Add(
-                        app.Id,
-                        app.Name,
-                        EnumHelper.GetEnumDisplayName(app.Status),
-                        app.Status,
-                        app.DateAdd,
-                        app.DateEdit
-                    );
+                    MessageBox.Show($"Ошибка при загрузке заявок: {ex.Message}\nStackTrace: {ex.StackTrace}");
                 }
-
-                dGV.ClearSelection();
-
-                CountApplications();
             }
-            catch (Exception ex)
+            else if (!_isError)
             {
-                MessageBox.Show($"Ошибка при загрузке заявок: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                try
+                {
+                    var response = await _apiClient.GetAsync<CollectionResult<Application>>("api/applications");
+
+                    if (response == null || !response.IsSuccess || response.Data == null)
+                    {
+                        MessageBox.Show($"Ошибка загрузки данных: {response?.ErrorMessage ?? "Неизвестная ошибка"}");
+                        return;
+                    }
+
+                    var applications = response.Data;
+
+                    var filteredApps = _isArchive
+                        ? applications.Where(app =>
+                            (app.Status == StatusEnum.Final || app.Status == StatusEnum.DenialFinal) &&
+                            app.DateEdit <= DateTime.Now.AddDays(-30))
+                        : applications;
+
+                    _applications = filteredApps.ToList();
+
+                    dGV.Rows.Clear();
+
+                    foreach (var app in _applications)
+                    {
+                        dGV.Rows.Add(
+                            app.Id,
+                            app.Name,
+                            EnumHelper.GetEnumDisplayName(app.Status),
+                            app.Status,
+                            app.DateAdd,
+                            app.DateEdit
+                        );
+                    }
+
+                    dGV.ClearSelection();
+
+                    CountApplications();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при загрузке заявок: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                }
             }
         }
 

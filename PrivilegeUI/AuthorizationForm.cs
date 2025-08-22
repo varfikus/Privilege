@@ -8,7 +8,8 @@ namespace PrivilegeUI
     {
         #region Fields
 
-        private readonly string _apiBaseUrl = "http://192.168.69.236:5000";
+        //private readonly string _apiBaseUrl = "http://192.168.69.236:5000";
+        private readonly string _apiBaseUrl = "http://localhost:5000";
         private MyHttpClient _apiClient;
         private int _userId;
 

@@ -7,11 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="template\confirmation.xml" />
     <None Remove="template\template.xml" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="template\template.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="template\confirmation.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -26,11 +33,24 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Migrations\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="APB.CryptoLib.Certificates">
+      <HintPath>..\..\..\Users\ikv\Downloads\Услуги\Услуги\ГА\stateadministration-service_step\stateadministration-service_step\UserState\bin\Debug\net8.0-windows\APB.CryptoLib.Certificates.dll</HintPath>
+    </Reference>
+    <Reference Include="APB.CryptoLib.Core">
+      <HintPath>..\..\..\Users\ikv\Downloads\Услуги\Услуги\ГА\stateadministration-service_step\stateadministration-service_step\UserState\bin\Debug\net8.0-windows\APB.CryptoLib.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="APB.CryptoLib.Utils.Core">
+      <HintPath>..\..\..\Users\ikv\Downloads\Услуги\Услуги\ГА\stateadministration-service_step\stateadministration-service_step\UserState\bin\Debug\net8.0-windows\APB.CryptoLib.Utils.Core.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

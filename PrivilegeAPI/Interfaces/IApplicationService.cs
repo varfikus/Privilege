@@ -12,5 +12,14 @@ namespace PrivilegeAPI.Interfaces
         Task<BaseResult<ApplicationDto>> CreateApplicationAsync(ApplicationDto applicationDto);
 
         Task<BaseResult<ApplicationDto>> UpdateApplicationAsync(ApplicationDto applicationDto);
+
+
+        Task<CollectionResult<DeniedApplicationDto>> GetDeniedApplicationsAsync();
+
+        Task<BaseResult<DeniedApplicationDto>> GetDeniedByIdAsync(int id);
+
+        Task<BaseResult<DeniedApplicationDto>> CreateApplicationAsync(DeniedApplicationDto applicationDto);
+
+        Task<BaseResult<DeniedApplicationDto>> UpdateApplicationAsync(DeniedApplicationDto applicationDto);
     }
 }

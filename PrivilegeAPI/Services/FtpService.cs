@@ -12,6 +12,7 @@ namespace PrivilegeAPI.Services
         public int Port { get; set; } = 21;
         public string Username { get; set; }
         public string Password { get; set; }
+        public bool UseTls { get; set; } = true;
     }
 
     public class FtpService
@@ -27,8 +28,8 @@ namespace PrivilegeAPI.Services
                 Credentials = new NetworkCredential(settings.Username, settings.Password),
             };
 
-            _ftpClient.Config.EncryptionMode = FtpEncryptionMode.Explicit; 
-            _ftpClient.Config.ValidateAnyCertificate = true;
+            _ftpClient.Config.EncryptionMode = settings.UseTls ? FtpEncryptionMode.Explicit : FtpEncryptionMode.None;
+            _ftpClient.Config.ValidateAnyCertificate = settings.UseTls;
         }
 
         public async Task ConnectAsync()

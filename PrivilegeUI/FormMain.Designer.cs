@@ -50,6 +50,7 @@ namespace PrivilegeUI
             btn_refresh = new Button();
             panelShadow = new Panel();
             panelTitle = new Panel();
+            btn_error = new Button();
             btn_update = new Button();
             pB_CurrentChildForm = new PictureBox();
             panelDown = new Panel();
@@ -366,6 +367,7 @@ namespace PrivilegeUI
             // panelTitle
             // 
             panelTitle.BackColor = Color.FromArgb(38, 75, 119);
+            panelTitle.Controls.Add(btn_error);
             panelTitle.Controls.Add(btn_update);
             panelTitle.Controls.Add(lblTitleClildForm);
             panelTitle.Controls.Add(pB_CurrentChildForm);
@@ -375,6 +377,22 @@ namespace PrivilegeUI
             panelTitle.Name = "panelTitle";
             panelTitle.Size = new Size(1124, 55);
             panelTitle.TabIndex = 9;
+            // 
+            // btn_error
+            // 
+            btn_error.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btn_error.BackgroundImageLayout = ImageLayout.Zoom;
+            btn_error.Cursor = Cursors.Hand;
+            btn_error.FlatAppearance.BorderSize = 0;
+            btn_error.FlatStyle = FlatStyle.Flat;
+            btn_error.Image = Properties.Resources.warning1;
+            btn_error.Location = new Point(1018, 6);
+            btn_error.Margin = new Padding(4, 3, 4, 3);
+            btn_error.Name = "btn_error";
+            btn_error.Size = new Size(47, 46);
+            btn_error.TabIndex = 4;
+            btn_error.UseVisualStyleBackColor = true;
+            btn_error.Click += btn_error_Click;
             // 
             // btn_update
             // 
@@ -580,5 +598,6 @@ namespace PrivilegeUI
         private System.Windows.Forms.Label lbl_time;
         private Button btn_apply;
         private Button btn_denial;
+        private Button btn_error;
     }
 }

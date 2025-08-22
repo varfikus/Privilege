@@ -88,7 +88,6 @@ namespace PrivilegeAPI.Hubs
 
                 return new Application
                 {
-                    Name = fullName,
                     Status = StatusEnum.Delivered,
                     DateAdd = applicationDate,
                     DateEdit = DateTime.Now,

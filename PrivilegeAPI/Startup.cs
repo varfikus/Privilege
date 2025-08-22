@@ -71,6 +71,7 @@ public class Startup
         });
 
         services.AddSingleton<FtpService>();
+        services.AddSingleton<PortalService>();
         services.AddSingleton<AnswerService>();
 
         services.AddScoped<IAuthService, AuthService>();

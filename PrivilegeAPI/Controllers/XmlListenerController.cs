@@ -83,21 +83,20 @@ namespace PrivilegeAPI.Controllers
                 _context.Files.Add(file);
                 await _context.SaveChangesAsync();
 
-                var application = ParseXml(xmlContent, file);
+                var signedDoc = await _answerService.SendToMedAsync(xmlContent);
+                if (signedDoc == null)
+                {
+                    throw new Exception("Ошибка при формировании документа для MED.");
+                }
+
+                var application = ParseXml(signedDoc.ToString(), file);
                 application.FileId = file.Id;
 
                 _context.Applications.Add(application);
                 await _context.SaveChangesAsync();
 
-                bool answer = _answerService.SendAnswerDeliveredAsync(application).Result;
-
-                if (!answer)
-                {
-                    throw new Exception("Failed to send reply.");
-                }
-
                 await _hubContext.Clients.All.SendAsync("ReceiveMessage",
-                    $"XML processed from {clientIp}. ApplicationId: {application.Id}");
+                    $"XML processed from {clientIp}.");
 
                 return Ok(new
                 {
@@ -133,40 +132,47 @@ namespace PrivilegeAPI.Controllers
                 var container = body2.Element(ns + "container")
                                 ?? throw new Exception("Missing <container> element");
 
-                var persData = container
-                    .Element(ns + "topheader")
-                    ?.Element(ns + "tophead")
-                    ?.Element(ns + "pers_data")
-                    ?? throw new Exception("Missing <pers_data> element");
+                string fullName = container.Element(ns + "nameru")?.Value
+                                  ?? throw new Exception("Missing <nameru> element");
 
-                string fam = persData.Element(ns + "fam")?.Value ?? "";
-                string im = persData.Element(ns + "im")?.Value ?? "";
-                string ot = persData.Element(ns + "ot")?.Value ?? "";
+                var reg = container.Element(ns + "reg")
+                          ?? throw new Exception("Missing <reg> element");
 
-                string fullName = $"{fam} {im} {ot}".Trim();
-                if (string.IsNullOrWhiteSpace(fullName))
-                    throw new Exception("FullName is required");
-
-                string benefitCategory = container
-                    .Element(ns + "content")
-                    ?.Element(ns + "lgota_text")
-                    ?.Value ?? "";
-                if (string.IsNullOrWhiteSpace(benefitCategory))
-                    throw new Exception("BenefitCategory is required");
-
-                string dateString = container.Element(ns + "dateblank")?.Value;
+                string dateString = reg.Element(ns + "datareg")?.Value;
                 if (!DateTime.TryParse(dateString, out DateTime applicationDate))
                 {
-                    throw new Exception("Invalid or missing ApplicationDate");
+                    throw new Exception("Invalid or missing registration date");
                 }
+
+                string regNumber = reg.Element(ns + "regnumber")?.Value;
+                string uslugNumber = reg.Element(ns + "uslugnumber")?.Value;
+
+                string kodorg = container.Element(ns + "kodorg")?.Value;
+
+                var destination = container
+                    .Element(ns + "destinations")
+                    ?.Element(ns + "destination")
+                    ?.Element(ns + "legalentity");
+
+                string kodorgout = destination?.Element(ns + "kodorgout")?.Value;
+                string nameorg = destination?.Element(ns + "nameorg")?.Value;
+
+                var servInfo = body2.Element(ns + "servinfo")
+                               ?? throw new Exception("Missing <servinfo> element");
+
+                string idgosuslug = servInfo.Element(ns + "idgosuslug")?.Value;
 
                 return new Application
                 {
-                    Name = fullName,
                     Status = StatusEnum.Delivered,
                     DateAdd = applicationDate,
                     DateEdit = DateTime.Now,
-                    File = file
+                    File = file,
+                    Idgosuslug = idgosuslug,
+                    Org = kodorg,
+                    Orgout = kodorgout,
+                    Orgnumber = regNumber,
+                    Uslugnumber = uslugNumber
                 };
             }
             catch (Exception ex)

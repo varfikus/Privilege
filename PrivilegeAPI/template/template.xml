@@ -1,443 +1,518 @@
-<!--?xml version="1.0" encoding="UTF-8"?-->         
+<!--?xml version="1.0" encoding="UTF-8"?-->
 <htmlx xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
-<body2 id="electronic-document" style="display: none;">
-    <container>
-        <e-doc>Электронный документ</e-doc><namemainmd></namemainmd><namemainukr></namemainukr><namemd></namemd>
-<nameukr></nameukr>
-<namemainru></namemainru>
-<nameru></nameru><grifapproval>
-            <officialapproval>
-                <approved></approved>
-                <nameorg></nameorg>
-                <fio></fio>
-                <post></post>
-                <date></date>
-            </officialapproval>
-            <resolutionapproval>
-                <approved></approved>
-                <namedoc></namedoc>
-                <date></date>
-                <regnumber></regnumber>
-            </resolutionapproval>
-        </grifapproval>  <referencedataorg><postaladdress></postaladdress><phonenumber></phonenumber><faxnumber></faxnumber><telexnumber></telexnumber><bankaccount></bankaccount><emailaddress></emailaddress><otheraddress></otheraddress></referencedataorg><placepublication></placepublication><nameviewdoc></nameviewdoc><reg>
-            <datareg></datareg>
-            <regnumber></regnumber>
-            <vhodregnumber></vhodregnumber>
-            <vhodregdate></vhodregdate>
-        </reg><destinations><destination><legalentity><kodorgout></kodorgout><nameorg></nameorg><structuralsubdivision></structuralsubdivision><post></post></legalentity></destination></destinations><grifrestriction></grifrestriction>
-        <resolutions><resolution><fioexecutor></fioexecutor><contentresolution></contentresolution><dateperformance></dateperformance>
-         <fio></fio><post></post><date></date></resolution></resolutions>
-		 <control></control><header></header><content></content><applications></applications><signaturestextinfo><post></post><fio></fio></signaturestextinfo><grifagreements><grifagreement>
-<officialagreement><agreed></agreed><nameorg></nameorg><fio></fio><date></date></officialagreement>
-                <resolutionagreement><agreed></agreed><nameagreementdoc></nameagreementdoc>
-                    <date></date><regnumber></regnumber></resolutionagreement>
-            </grifagreement></grifagreements>
-        <visaagreements></visaagreements><executor><executorname></executorname><executordate></executordate><executorphone></executorphone></executor><docstatus>
-            <inthecase></inthecase><numbercase></numbercase>
-            <datedocexecutor></datedocexecutor><numberdocexecutor></numberdocexecutor>
-            <summaryperformance></summaryperformance><post></post>
-            <fio></fio><date></date>
-        </docstatus>
-        <receiptmarkdoc>
-            <abbreviatednameorg></abbreviatednameorg>
-            <date></date>
-            <regnumber></regnumber>
-        </receiptmarkdoc><kodformdoc></kodformdoc><kodorg>1</kodorg><style>
-			Signature {
-			display:none !important;
-			}
-			#electronic-document {
-			display: block !important;
-			position: relative;
-			width: 660px;
-			margin: 24px auto;
-			padding: 52px 52px 52px 104px;
-			background-color: #fff;
-			border: #c6c6c6 1px solid;
-			font-family: Arial, sans-serif;
-			}
-			#electronic-document *:not(a) {
-			cursor: default;
-			}
-			:root {
-			background-color: #e6e6e6;
-			}
+	<body2 id="electronic-document" style="display: none;">
+		<container>
+			<e-doc>Электронный документ</e-doc>
+			<namemainmd></namemainmd>
+			<namemainukr></namemainukr>
+			<namemd></namemd>
+			<nameukr></nameukr>
+			<namemainru></namemainru>
+			<nameru></nameru>
+			<grifapproval>
+				<officialapproval>
+					<approved></approved>
+					<nameorg></nameorg>
+					<fio></fio>
+					<post></post>
+					<date></date>
+				</officialapproval>
+				<resolutionapproval>
+					<approved></approved>
+					<namedoc></namedoc>
+					<date></date>
+					<regnumber></regnumber>
+				</resolutionapproval>
+			</grifapproval>
+			<referencedataorg>
+				<postaladdress></postaladdress>
+				<phonenumber></phonenumber>
+				<faxnumber></faxnumber>
+				<telexnumber></telexnumber>
+				<bankaccount></bankaccount>
+				<emailaddress></emailaddress>
+				<otheraddress></otheraddress>
+			</referencedataorg>
+			<placepublication></placepublication>
+			<nameviewdoc></nameviewdoc>
+			<reg>
+				<datareg></datareg>
+				<regnumber></regnumber>
+				<vhodregnumber></vhodregnumber>
+				<vhodregdate></vhodregdate>
+			</reg>
+			<destinations>
+				<destination>
+					<legalentity>
+						<kodorgout></kodorgout>
+						<nameorg></nameorg>
+						<structuralsubdivision></structuralsubdivision>
+						<post></post>
+					</legalentity>
+				</destination>
+			</destinations>
+			<grifrestriction></grifrestriction>
+			<resolutions>
+				<resolution>
+					<fioexecutor></fioexecutor>
+					<contentresolution></contentresolution>
+					<dateperformance></dateperformance>
+					<fio></fio>
+					<post></post>
+					<date></date>
+				</resolution>
+			</resolutions>
+			<control></control>
+			<header></header>
+			<content></content>
+			<applications></applications>
+			<signaturestextinfo>
+				<post></post>
+				<fio></fio>
+			</signaturestextinfo>
+			<grifagreements>
+				<grifagreement>
+					<officialagreement>
+						<agreed></agreed>
+						<nameorg></nameorg>
+						<fio></fio>
+						<date></date>
+					</officialagreement>
+					<resolutionagreement>
+						<agreed></agreed>
+						<nameagreementdoc></nameagreementdoc>
+						<date></date>
+						<regnumber></regnumber>
+					</resolutionagreement>
+				</grifagreement>
+			</grifagreements>
+			<visaagreements></visaagreements>
+			<executor>
+				<executorname></executorname>
+				<executordate></executordate>
+				<executorphone></executorphone>
+			</executor>
+			<docstatus>
+				<inthecase></inthecase>
+				<numbercase></numbercase>
+				<datedocexecutor></datedocexecutor>
+				<numberdocexecutor></numberdocexecutor>
+				<summaryperformance></summaryperformance>
+				<post></post>
+				<fio></fio>
+				<date></date>
+			</docstatus>
+			<receiptmarkdoc>
+				<abbreviatednameorg></abbreviatednameorg>
+				<date></date>
+				<regnumber></regnumber>
+			</receiptmarkdoc>
+			<kodformdoc></kodformdoc>
+			<kodorg>1</kodorg>
+			<style>
+				Signature {
+				display:none !important;
+				}
+				#electronic-document {
+				display: block !important;
+				position: relative;
+				width: 660px;
+				margin: 24px auto;
+				padding: 52px 52px 52px 104px;
+				background-color: #fff;
+				border: #c6c6c6 1px solid;
+				font-family: Arial, sans-serif;
+				}
+				#electronic-document *:not(a) {
+				cursor: default;
+				}
+				:root {
+				background-color: #e6e6e6;
+				}
 
-			#electronic-document idxml:not(:empty):before { content: "id:"; }
-			#electronic-document referencedataorg phonenumber:not(:empty):before { content: "тел. "; }
-			#electronic-document referencedataorg faxnumber:not(:empty):before { content: "факс: "; }
-			#electronic-document referencedataorg telexnumber:not(:empty):before { content: "телекс: "; }
-			#electronic-document referencedataorg bankaccount:not(:empty):before { content: "расчетный счет № "; }
-			#electronic-document referencedataorg emailaddress:not(:empty):before { content: "e-mail: "; }
-			#electronic-document referencedataorg otheraddress:not(:empty):before { content: "другие сведения: "; }
-			#electronic-document reg regnumber:not(:empty):before { content: "№ ";  }
-			#electronic-document reg vhodregnumber:not(:empty):before { content: "на № ";  }
-			#electronic-document reg vhodregdate:not(:empty):before { content: "от ";  }
-			#electronic-document resolutions resolution dateperformance:not(:empty) { content: "до "; }
+				#electronic-document idxml:not(:empty):before { content: "id:"; }
+				#electronic-document referencedataorg phonenumber:not(:empty):before { content: "тел. "; }
+				#electronic-document referencedataorg faxnumber:not(:empty):before { content: "факс: "; }
+				#electronic-document referencedataorg telexnumber:not(:empty):before { content: "телекс: "; }
+				#electronic-document referencedataorg bankaccount:not(:empty):before { content: "расчетный счет № "; }
+				#electronic-document referencedataorg emailaddress:not(:empty):before { content: "e-mail: "; }
+				#electronic-document referencedataorg otheraddress:not(:empty):before { content: "другие сведения: "; }
+				#electronic-document reg regnumber:not(:empty):before { content: "№ ";  }
+				#electronic-document reg vhodregnumber:not(:empty):before { content: "на № ";  }
+				#electronic-document reg vhodregdate:not(:empty):before { content: "от ";  }
+				#electronic-document resolutions resolution dateperformance:not(:empty) { content: "до "; }
 
-			#electronic-document referencedataorg postaladdress:not(:empty):after,
-			#electronic-document referencedataorg phonenumber:not(:empty):after,
-			#electronic-document referencedataorg faxnumber:not(:empty):after,
-			#electronic-document referencedataorg telexnumber:not(:empty):after,
-			#electronic-document referencedataorg bankaccount:not(:empty):after { content: ","; }
-			#electronic-document applications application number:not(:empty):after { content: "." }
+				#electronic-document referencedataorg postaladdress:not(:empty):after,
+				#electronic-document referencedataorg phonenumber:not(:empty):after,
+				#electronic-document referencedataorg faxnumber:not(:empty):after,
+				#electronic-document referencedataorg telexnumber:not(:empty):after,
+				#electronic-document referencedataorg bankaccount:not(:empty):after { content: ","; }
+				#electronic-document applications application number:not(:empty):after { content: "." }
 
-			#electronic-document container { position: relative; }
-			#electronic-document e-doc:not(:empty) {
-			position: absolute;
-			display: block;
-			text-align: right;
-			color: #eee;
-			top: -36px;
-			right: 0;
-			}
+				#electronic-document container { position: relative; }
+				#electronic-document e-doc:not(:empty) {
+				position: absolute;
+				display: block;
+				text-align: right;
+				color: #eee;
+				top: -36px;
+				right: 0;
+				}
 
-			#electronic-document nameviewdoc {
-			text-align: center;
-			text-transform: uppercase;
-			letter-spacing: 5px;
-			padding: 0 12px;
-			}
+				#electronic-document nameviewdoc {
+				text-align: center;
+				text-transform: uppercase;
+				letter-spacing: 5px;
+				padding: 0 12px;
+				}
 
-			#electronic-document grifrestriction {
-			text-align: left;
-			font-weight: bold;
-			}
+				#electronic-document grifrestriction {
+				text-align: left;
+				font-weight: bold;
+				}
 
-			#electronic-document control {
-			font-weight: bold;
-			}
-			#electronic-document content {
-			white-space: pre-line;
-			text-align: justify;
-			text-indent: 1.5cm;
-			line-height: 1.5em;
-			}
+				#electronic-document control {
+				font-weight: bold;
+				}
+				#electronic-document content {
+				white-space: pre-line;
+				text-align: justify;
+				text-indent: 1.5cm;
+				line-height: 1.5em;
+				}
 
-			#electronic-document namemainukr,
-			#electronic-document namemainmd,
-			#electronic-document namemd,
-			#electronic-document nameukr {
-			min-height: 50px;
-			}
+				#electronic-document namemainukr,
+				#electronic-document namemainmd,
+				#electronic-document namemd,
+				#electronic-document nameukr {
+				min-height: 50px;
+				}
 
-			#electronic-document nameru,
-			#electronic-document namemainukr,
-			#electronic-document namemainmd,
-			#electronic-document namemd,
-			#electronic-document nameukr,
-			#electronic-document namemainru,
-			#electronic-document nameru {
-			display: block;
-			text-align: center;
-			font-weight: bold;
-			font-size: 14px;
-			text-shadow: #fff 1px 1px 0, #fff -1px -1px 0, #fff -1px 1px 0, #fff 1px -1px 0;
-			}
-			#electronic-document nameukr,
-			#electronic-document namemd,
-			#electronic-document nameru {
-			text-transform: uppercase;
-			}
+				#electronic-document nameru,
+				#electronic-document namemainukr,
+				#electronic-document namemainmd,
+				#electronic-document namemd,
+				#electronic-document nameukr,
+				#electronic-document namemainru,
+				#electronic-document nameru {
+				display: block;
+				text-align: center;
+				font-weight: bold;
+				font-size: 14px;
+				text-shadow: #fff 1px 1px 0, #fff -1px -1px 0, #fff -1px 1px 0, #fff 1px -1px 0;
+				}
+				#electronic-document nameukr,
+				#electronic-document namemd,
+				#electronic-document nameru {
+				text-transform: uppercase;
+				}
 
-			#electronic-document signaturestextinfo,
-			#electronic-document executor,
-			#electronic-document control,
-			#electronic-document header,
-			#electronic-document content,
-			#electronic-document applications,
-			#electronic-document placepublication {
-			display: block;
-			}
+				#electronic-document signaturestextinfo,
+				#electronic-document executor,
+				#electronic-document control,
+				#electronic-document header,
+				#electronic-document content,
+				#electronic-document applications,
+				#electronic-document placepublication {
+				display: block;
+				}
 
-			#electronic-document placepublication,
-			#electronic-document header {
-			text-align: center;
-			}
-			namemainru:empty+nameru {
-			padding-top: 100px;
-			}
+				#electronic-document placepublication,
+				#electronic-document header {
+				text-align: center;
+				}
+				namemainru:empty+nameru {
+				padding-top: 100px;
+				}
 
-			#electronic-document signaturestextinfo post,
-			#electronic-document signaturestextinfo fio,
-			#electronic-document docstatus,
-			#electronic-document receiptmarkdoc,
-			#electronic-document grifagreements,
-			#electronic-document reg,
-			#electronic-document destinations {
-			display: table-cell !important;
-			}
+				#electronic-document signaturestextinfo post,
+				#electronic-document signaturestextinfo fio,
+				#electronic-document docstatus,
+				#electronic-document receiptmarkdoc,
+				#electronic-document grifagreements,
+				#electronic-document reg,
+				#electronic-document destinations {
+				display: table-cell !important;
+				}
 
-			#electronic-document signaturestextinfo post,
-			#electronic-document docstatus,
-			#electronic-document grifagreements,
-			#electronic-document visaagreements,
-			#electronic-document reg {
-			width: 390px;
-			}
+				#electronic-document signaturestextinfo post,
+				#electronic-document docstatus,
+				#electronic-document grifagreements,
+				#electronic-document visaagreements,
+				#electronic-document reg {
+				width: 390px;
+				}
 
-			#electronic-document signaturestextinfo fio,
-			#electronic-document receiptmarkdoc,
-			#electronic-document destinations {
-			width: 270px;
-			}
+				#electronic-document signaturestextinfo fio,
+				#electronic-document receiptmarkdoc,
+				#electronic-document destinations {
+				width: 270px;
+				}
 
-			#electronic-document signaturestextinfo fio {
-			text-align: right;
-			}
+				#electronic-document signaturestextinfo fio {
+				text-align: right;
+				}
 
-			#electronic-document signaturestextinfo post {
-			text-align: right;
-			color: red;
-			}
+				#electronic-document signaturestextinfo post {
+				text-align: right;
+				color: red;
+				}
 
-			#electronic-document resolutions,
-			#electronic-document grifrestriction:not(:empty) {
-			display: block;
-			padding-left: 390px;
-			}
+				#electronic-document resolutions,
+				#electronic-document grifrestriction:not(:empty) {
+				display: block;
+				padding-left: 390px;
+				}
 
-			#electronic-document namemd,
-			#electronic-document nameukr,
-			#electronic-document namemainukr,
-			#electronic-document namemainmd {
-			display: table-cell;
-			text-align: center;
-			width: 270px;
-			}
+				#electronic-document namemd,
+				#electronic-document nameukr,
+				#electronic-document namemainukr,
+				#electronic-document namemainmd {
+				display: table-cell;
+				text-align: center;
+				width: 270px;
+				}
 
-			#electronic-document namemd,
-			#electronic-document namemainmd {
-			padding-right: 60px;
-			}
-			#electronic-document nameukr,
-			#electronic-document namemainukr {
-			padding-left: 60px;
-			}
+				#electronic-document namemd,
+				#electronic-document namemainmd {
+				padding-right: 60px;
+				}
+				#electronic-document nameukr,
+				#electronic-document namemainukr {
+				padding-left: 60px;
+				}
 
-			#electronic-document namemd,
-			#electronic-document nameukr {
-			float: left;
-			}
-
-
-			#electronic-document referencedataorg,
-			#electronic-document nameviewdoc,
-			#electronic-documentservinfo signaturesxml,
-			#electronic-document servinfo idxml,
-			#electronic-document servinfo timestampout,
-			#electronic-document servinfo timestampin {
-			display: block;
-			}
-
-			#electronic-document nameru,
-			#electronic-document namemainru {
-			padding-left: 150px;
-			padding-right: 150px;
-			}
-			#electronic-document referencedataorg {
-			padding-left: 60px;
-			padding-right: 60px;
-			}
-
-
-			#electronic-document resolutions resolution,
-			#electronic-document grifapproval,
-			#electronic-document grifagreements grifagreement officialagreement,
-			#electronic-document grifagreements grifagreement resolutionagreement {
-			display: block;
-			}
-			#electronic-document grifapproval {
-			padding-left: 390px;
-			}
-
-			#electronic-document reg datareg,
-			#electronic-document reg regnumber,
-			#electronic-document reg vhodregnumber,
-			#electronic-document reg vhodregdate {
-			display: inline-block;
-			padding: 3px;
-			vertical-align: top;
-			}
-			#electronic-document reg datareg,
-			#electronic-document reg vhodregnumber {
-			width: 210px;
-			}
-			#electronic-document reg regnumber,
-			#electronic-document reg vhodregdate {
-			width: 150px;
-			}
-
-			#electronic-document grifapproval {
-			text-align: right;
-			}
-
-			#electronic-document referencedataorg,
-			#electronic-document nameviewdoc {
-			text-align: center;
-			}
-
-			#electronic-document referencedataorg postaladdress:not(:empty),
-			#electronic-document referencedataorg phonenumber:not(:empty),
-			#electronic-document referencedataorg faxnumber:not(:empty),
-			#electronic-document referencedataorg telexnumber:not(:empty),
-			#electronic-document referencedataorg bankaccount:not(:empty),
-			#electronic-document referencedataorg emailaddress:not(:empty),
-			#electronic-document referencedataorg otheraddress:not(:empty) {
-			display: inline-block;
-			font-size: 12px;
-			}
-
-			#electronic-document grifapproval officialapproval approved:not(:empty),
-			#electronic-document grifapproval officialapproval nameorg:not(:empty),
-			#electronic-document grifapproval officialapproval signature:not(:empty),
-			#electronic-document grifapproval officialapproval fio:not(:empty),
-			#electronic-document grifapproval officialapproval post:not(:empty),
-			#electronic-document grifapproval officialapproval date:not(:empty),
-			#electronic-document grifapproval resolutionapproval approved:not(:empty),
-			#electronic-document grifapproval resolutionapproval namedoc:not(:empty),
-			#electronic-document grifapproval resolutionapproval date:not(:empty),
-			#electronic-document grifapproval resolutionapproval regnumber:not(:empty),
-
-			#electronic-document destinations destination legalentity kodorgout:not(:empty),
-			#electronic-document destinations destination legalentity nameorg:not(:empty),
-			#electronic-document destinations destination legalentity structuralsubdivision:not(:empty),
-			#electronic-document destinations destination legalentity post:not(:empty),
-			#electronic-document destinations destination individual postaladdress:not(:empty),
-			#electronic-document destinations destination individual identitydocument:not(:empty),
-			#electronic-document destinations destination individual fio:not(:empty),
-
-			#electronic-document resolutions resolution fioexecutor:not(:empty),
-			#electronic-document resolutions resolution contentresolution:not(:empty),
-			#electronic-document resolutions resolution dateperformance:not(:empty),
-			#electronic-document resolutions resolution signature:not(:empty),
-			#electronic-document resolutions resolution fio:not(:empty),
-			#electronic-document resolutions resolution post:not(:empty),
-			#electronic-document resolutions resolution date:not(:empty),
-
-			#electronic-document applications application:not(:empty),
-
-			#electronic-document grifagreements grifagreement officialagreement agreed:not(:empty),
-			#electronic-document grifagreements grifagreement officialagreement nameorg:not(:empty),
-			#electronic-document grifagreements grifagreement officialagreement signature:not(:empty),
-			#electronic-document grifagreements grifagreement officialagreement fio:not(:empty),
-			#electronic-document grifagreements grifagreement officialagreement date:not(:empty),
-			#electronic-document grifagreements grifagreement resolutionagreement agreed:not(:empty),
-			#electronic-document grifagreements grifagreement resolutionagreement nameagreementdoc:not(:empty),
-			#electronic-document grifagreements grifagreement resolutionagreement date:not(:empty),
-			#electronic-document grifagreements grifagreement resolutionagreement regnumber:not(:empty),
-
-			#electronic-document visaagreement comments remarks:not(:empty),
-			#electronic-document visaagreement comments datаcomment:not(:empty),
-			#electronic-document visaagreement post:not(:empty),
-			#electronic-document visaagreement fio:not(:empty),
-			#electronic-document visaagreement signature:not(:empty),
-			#electronic-document visaagreement date:not(:empty),
-
-			#electronic-document executor executorname:not(:empty),
-			#electronic-document executor executordate:not(:empty),
-			#electronic-document executor executorphone:not(:empty),
-
-			#electronic-document receiptmarkdoc abbreviatednameorg:not(:empty),
-			#electronic-document receiptmarkdoc date:not(:empty),
-			#electronic-document receiptmarkdoc regnumber:not(:empty),
-
-			#electronic-document docstatus inthecase:not(:empty),
-			#electronic-document docstatus numbercase:not(:empty),
-			#electronic-document docstatus datedocexecutor:not(:empty),
-			#electronic-document docstatus numberdocexecutor:not(:empty),
-			#electronic-document docstatus summaryperformance:not(:empty),
-			#electronic-document docstatus post:not(:empty),
-			#electronic-document docstatus fio:not(:empty),
-			#electronic-document docstatus signature:not(:empty),
-			#electronic-document docstatus date:not(:empty) {
-			display: list-item;
-			list-style-type: none;
-			padding: 3px 0;
-			}
-			#electronic-document applications application,
-			#electronic-document applications application:not(:empty) {
-			list-style-type: decimal;
-			margin-left: 120px;
-			}
+				#electronic-document namemd,
+				#electronic-document nameukr {
+				float: left;
+				}
 
 
-			#electronic-document visaagreements:not(:empty):before {
-			content: "визы"
-			}
-			#electronic-document applications:not(:empty):before {
-			content: "приложение:";
-			display: block;
-			position: absolute;
-			left: 0;
-			margin-top: 5px;
-			}
-			#electronic-document applications application number,
-			#electronic-document applications application name
-			{
-			display: inline-block;
-			padding: 3px;
-			}
+				#electronic-document referencedataorg,
+				#electronic-document nameviewdoc,
+				#electronic-documentservinfo signaturesxml,
+				#electronic-document servinfo idxml,
+				#electronic-document servinfo timestampout,
+				#electronic-document servinfo timestampin {
+				display: block;
+				}
+
+				#electronic-document nameru,
+				#electronic-document namemainru {
+				padding-left: 150px;
+				padding-right: 150px;
+				}
+				#electronic-document referencedataorg {
+				padding-left: 60px;
+				padding-right: 60px;
+				}
 
 
-			#electronic-document namemainukr,
-			#electronic-document namemainmd,
-			#electronic-document namemd,
-			#electronic-document nameukr,
-			#electronic-document namemainru,
-			#electronic-document nameru,
+				#electronic-document resolutions resolution,
+				#electronic-document grifapproval,
+				#electronic-document grifagreements grifagreement officialagreement,
+				#electronic-document grifagreements grifagreement resolutionagreement {
+				display: block;
+				}
+				#electronic-document grifapproval {
+				padding-left: 390px;
+				}
 
-			#electronic-document referencedataorg,
-			#electronic-document nameviewdoc,
-			#electronic-document servinfo signaturesxml,
-			#electronic-document servinfo idxml,
-			#electronic-document servinfo timestampout,
-			#electronic-document servinfo timestampin,
+				#electronic-document reg datareg,
+				#electronic-document reg regnumber,
+				#electronic-document reg vhodregnumber,
+				#electronic-document reg vhodregdate {
+				display: inline-block;
+				padding: 3px;
+				vertical-align: top;
+				}
+				#electronic-document reg datareg,
+				#electronic-document reg vhodregnumber {
+				width: 210px;
+				}
+				#electronic-document reg regnumber,
+				#electronic-document reg vhodregdate {
+				width: 150px;
+				}
 
-			#electronic-document grifapproval officialapproval date:not(:empty),
-			#electronic-document grifapproval resolutionapproval regnumber:not(:empty),
-			#electronic-document placepublication,
-			#electronic-document signaturestextinfo,
-			#electronic-document destinations,
-			#electronic-document grifrestriction:not(:empty),
-			#electronic-document resolutions resolution date:not(:empty),
-			#electronic-document header:not(:empty),
-			#electronic-document content:not(:empty),
-			#electronic-document applications application:last-child,
-			#electronic-document executor executorphone:not(:empty),
-			#electronic-document visaagreements visaagreement date:not(:empty),
-			#electronic-document grifagreements grifagreement resolutionagreement regnumber:not(:empty),
-			#electronic-document grifagreements grifagreement officialagreement date:not(:empty) {
-			padding-bottom: 12px;
-			}
+				#electronic-document grifapproval {
+				text-align: right;
+				}
 
-			#electronic-document servinfo idxml {
-			padding-top: 36px;
-			}
+				#electronic-document referencedataorg,
+				#electronic-document nameviewdoc {
+				text-align: center;
+				}
 
-			#electronic-document applications application data,
-			#electronic-document servinfo signaturesxml,
-			#electronic-document destinations destination legalentity kodorgout:not(:empty),
-			#electronic-document kodformdoc,
-			#electronic-document kodorg {
-			display: none;
-			}
+				#electronic-document referencedataorg postaladdress:not(:empty),
+				#electronic-document referencedataorg phonenumber:not(:empty),
+				#electronic-document referencedataorg faxnumber:not(:empty),
+				#electronic-document referencedataorg telexnumber:not(:empty),
+				#electronic-document referencedataorg bankaccount:not(:empty),
+				#electronic-document referencedataorg emailaddress:not(:empty),
+				#electronic-document referencedataorg otheraddress:not(:empty) {
+				display: inline-block;
+				font-size: 12px;
+				}
 
-			#electronic-document servinfo {
-			display: none;
-			}
+				#electronic-document grifapproval officialapproval approved:not(:empty),
+				#electronic-document grifapproval officialapproval nameorg:not(:empty),
+				#electronic-document grifapproval officialapproval signature:not(:empty),
+				#electronic-document grifapproval officialapproval fio:not(:empty),
+				#electronic-document grifapproval officialapproval post:not(:empty),
+				#electronic-document grifapproval officialapproval date:not(:empty),
+				#electronic-document grifapproval resolutionapproval approved:not(:empty),
+				#electronic-document grifapproval resolutionapproval namedoc:not(:empty),
+				#electronic-document grifapproval resolutionapproval date:not(:empty),
+				#electronic-document grifapproval resolutionapproval regnumber:not(:empty),
 
-			/* #electronic-document destinations destination legalentity nameorg:not(:empty) {display: none;}  скрываем название орг.получателя */
+				#electronic-document destinations destination legalentity kodorgout:not(:empty),
+				#electronic-document destinations destination legalentity nameorg:not(:empty),
+				#electronic-document destinations destination legalentity structuralsubdivision:not(:empty),
+				#electronic-document destinations destination legalentity post:not(:empty),
+				#electronic-document destinations destination individual postaladdress:not(:empty),
+				#electronic-document destinations destination individual identitydocument:not(:empty),
+				#electronic-document destinations destination individual fio:not(:empty),
+
+				#electronic-document resolutions resolution fioexecutor:not(:empty),
+				#electronic-document resolutions resolution contentresolution:not(:empty),
+				#electronic-document resolutions resolution dateperformance:not(:empty),
+				#electronic-document resolutions resolution signature:not(:empty),
+				#electronic-document resolutions resolution fio:not(:empty),
+				#electronic-document resolutions resolution post:not(:empty),
+				#electronic-document resolutions resolution date:not(:empty),
+
+				#electronic-document applications application:not(:empty),
+
+				#electronic-document grifagreements grifagreement officialagreement agreed:not(:empty),
+				#electronic-document grifagreements grifagreement officialagreement nameorg:not(:empty),
+				#electronic-document grifagreements grifagreement officialagreement signature:not(:empty),
+				#electronic-document grifagreements grifagreement officialagreement fio:not(:empty),
+				#electronic-document grifagreements grifagreement officialagreement date:not(:empty),
+				#electronic-document grifagreements grifagreement resolutionagreement agreed:not(:empty),
+				#electronic-document grifagreements grifagreement resolutionagreement nameagreementdoc:not(:empty),
+				#electronic-document grifagreements grifagreement resolutionagreement date:not(:empty),
+				#electronic-document grifagreements grifagreement resolutionagreement regnumber:not(:empty),
+
+				#electronic-document visaagreement comments remarks:not(:empty),
+				#electronic-document visaagreement comments datаcomment:not(:empty),
+				#electronic-document visaagreement post:not(:empty),
+				#electronic-document visaagreement fio:not(:empty),
+				#electronic-document visaagreement signature:not(:empty),
+				#electronic-document visaagreement date:not(:empty),
+
+				#electronic-document executor executorname:not(:empty),
+				#electronic-document executor executordate:not(:empty),
+				#electronic-document executor executorphone:not(:empty),
+
+				#electronic-document receiptmarkdoc abbreviatednameorg:not(:empty),
+				#electronic-document receiptmarkdoc date:not(:empty),
+				#electronic-document receiptmarkdoc regnumber:not(:empty),
+
+				#electronic-document docstatus inthecase:not(:empty),
+				#electronic-document docstatus numbercase:not(:empty),
+				#electronic-document docstatus datedocexecutor:not(:empty),
+				#electronic-document docstatus numberdocexecutor:not(:empty),
+				#electronic-document docstatus summaryperformance:not(:empty),
+				#electronic-document docstatus post:not(:empty),
+				#electronic-document docstatus fio:not(:empty),
+				#electronic-document docstatus signature:not(:empty),
+				#electronic-document docstatus date:not(:empty) {
+				display: list-item;
+				list-style-type: none;
+				padding: 3px 0;
+				}
+				#electronic-document applications application,
+				#electronic-document applications application:not(:empty) {
+				list-style-type: decimal;
+				margin-left: 120px;
+				}
 
 
-			background-repeat: no-repeat;
-			background-position: 280px 0;
-			}
+				#electronic-document visaagreements:not(:empty):before {
+				content: "визы"
+				}
+				#electronic-document applications:not(:empty):before {
+				content: "приложение:";
+				display: block;
+				position: absolute;
+				left: 0;
+				margin-top: 5px;
+				}
+				#electronic-document applications application number,
+				#electronic-document applications application name
+				{
+				display: inline-block;
+				padding: 3px;
+				}
 
-			#electronic-document executor {
-			font-size: 10pt;
-			}
-		</style></container>
-	<servinfo>
-        <signaturesxml></signaturesxml><idgosuslug></idgosuslug><resultgosuslug></resultgosuslug><idxml></idxml><timestampout></timestampout><timestampin></timestampin>
-    </servinfo></body2></htmlx>
+
+				#electronic-document namemainukr,
+				#electronic-document namemainmd,
+				#electronic-document namemd,
+				#electronic-document nameukr,
+				#electronic-document namemainru,
+				#electronic-document nameru,
+
+				#electronic-document referencedataorg,
+				#electronic-document nameviewdoc,
+				#electronic-document servinfo signaturesxml,
+				#electronic-document servinfo idxml,
+				#electronic-document servinfo timestampout,
+				#electronic-document servinfo timestampin,
+
+				#electronic-document grifapproval officialapproval date:not(:empty),
+				#electronic-document grifapproval resolutionapproval regnumber:not(:empty),
+				#electronic-document placepublication,
+				#electronic-document signaturestextinfo,
+				#electronic-document destinations,
+				#electronic-document grifrestriction:not(:empty),
+				#electronic-document resolutions resolution date:not(:empty),
+				#electronic-document header:not(:empty),
+				#electronic-document content:not(:empty),
+				#electronic-document applications application:last-child,
+				#electronic-document executor executorphone:not(:empty),
+				#electronic-document visaagreements visaagreement date:not(:empty),
+				#electronic-document grifagreements grifagreement resolutionagreement regnumber:not(:empty),
+				#electronic-document grifagreements grifagreement officialagreement date:not(:empty) {
+				padding-bottom: 12px;
+				}
+
+				#electronic-document servinfo idxml {
+				padding-top: 36px;
+				}
+
+				#electronic-document applications application data,
+				#electronic-document servinfo signaturesxml,
+				#electronic-document destinations destination legalentity kodorgout:not(:empty),
+				#electronic-document kodformdoc,
+				#electronic-document kodorg {
+				display: none;
+				}
+
+				/* #electronic-document destinations destination legalentity nameorg:not(:empty) {display: none;}  скрываем название орг.получателя */
+
+
+				background-repeat: no-repeat;
+				background-position: 280px 0;
+				}
+
+				#electronic-document executor {
+				font-size: 10pt;
+				}
+
+				#electronic-document privilegeinfo {
+				display: none;
+				}
+			</style>
+		</container>
+		<servinfo>
+			<signaturesxml></signaturesxml>
+			<idgosuslug></idgosuslug>
+			<resultgosuslug></resultgosuslug>
+			<idxml></idxml>
+			<timestampout></timestampout>
+			<timestampin></timestampin>
+		</servinfo>
+	</body2>
+</htmlx>

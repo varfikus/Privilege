@@ -7,6 +7,7 @@ namespace PrivilegeAPI.Context
     public class ApplicationDbContext : DbContext
     {
         public DbSet<Application> Applications { get; set; }
+        public DbSet<DeniedApplication> DeniedApplications { get; set; }
         public DbSet<Models.File> Files { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserToken> UserTokens { get; set; }
@@ -21,6 +22,12 @@ namespace PrivilegeAPI.Context
                 .HasOne(a => a.File)
                 .WithOne(f => f.Application)
                 .HasForeignKey<Application>(a => a.FileId)
+                .OnDelete(DeleteBehavior.Cascade); 
+
+            modelBuilder.Entity<DeniedApplication>()
+                .HasOne(a => a.File)
+                .WithOne(f => f.DeniedApplication)
+                .HasForeignKey<DeniedApplication>(a => a.FileId)
                 .OnDelete(DeleteBehavior.Cascade); 
         }
     }

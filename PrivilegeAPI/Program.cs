@@ -12,7 +12,6 @@ namespace PrivilegeAPI
             using (var scope = host.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                //dbContext.Database.Migrate();
             }
 
             var lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();

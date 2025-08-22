@@ -3,7 +3,7 @@ using File = PrivilegeAPI.Models.File;
 
 namespace PrivilegeAPI.Dto
 {
-    public class ApplicationDto
+    public class DeniedApplicationDto
     {
         public int Id { get; set; }
         public string? Idgosuslug { get; set; }
@@ -12,9 +12,9 @@ namespace PrivilegeAPI.Dto
         public string? Orgnumber { get; set; }
         public string? Uslugnumber { get; set; }
         public int? FileId { get; set; }
-        public StatusEnum? Status { get; set; }
         public DateTime? DateAdd { get; set; }
         public DateTime? DateEdit { get; set; }
+        public DenyStatus Status { get; set; }
         public File? File { get; set; }
     }
 }

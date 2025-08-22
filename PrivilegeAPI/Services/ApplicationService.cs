@@ -22,7 +22,11 @@ namespace PrivilegeAPI.Services
                 .Select(a => new ApplicationDto
                 {
                     Id = a.Id,
-                    Name = a.Name,
+                    Idgosuslug = a.Idgosuslug,
+                    Org = a.Org,
+                    Orgout = a.Orgout,
+                    Orgnumber = a.Orgnumber,
+                    Uslugnumber = a.Uslugnumber,
                     Status = a.Status,   
                     DateAdd = a.DateAdd,
                     DateEdit = a.DateEdit,
@@ -50,7 +54,11 @@ namespace PrivilegeAPI.Services
             var dto = new ApplicationDto
             {
                 Id = application.Id,
-                Name = application.Name,
+                Idgosuslug = application.Idgosuslug,
+                Org = application.Org,
+                Orgout = application.Orgout,
+                Orgnumber = application.Orgnumber,
+                Uslugnumber = application.Uslugnumber,
                 Status = application.Status,
                 DateAdd = application.DateAdd,
                 DateEdit = application.DateEdit,
@@ -70,7 +78,11 @@ namespace PrivilegeAPI.Services
             {
                 var application = new Application
                 {
-                    Name = applicationDto.Name,
+                    Idgosuslug = applicationDto.Idgosuslug,
+                    Org = applicationDto.Org,
+                    Orgout = applicationDto.Orgout,
+                    Orgnumber = applicationDto.Orgnumber,
+                    Uslugnumber = applicationDto.Uslugnumber,
                     Status = (StatusEnum)applicationDto.Status,
                     DateAdd = DateTime.Now,
                     DateEdit = DateTime.Now,
@@ -110,7 +122,12 @@ namespace PrivilegeAPI.Services
                         ErrorMessage = "Application not found"
                     };
 
-                existingApplication.Status = (StatusEnum)applicationDto.Status;
+                if (applicationDto.FileId.HasValue)
+                    existingApplication.FileId = applicationDto.FileId.Value;
+
+                if (applicationDto.Status.HasValue)
+                    existingApplication.Status = applicationDto.Status.Value;
+
                 existingApplication.DateEdit = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
@@ -123,6 +140,131 @@ namespace PrivilegeAPI.Services
             catch (Exception ex)
             {
                 return new BaseResult<ApplicationDto>
+                {
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<CollectionResult<DeniedApplicationDto>> GetDeniedApplicationsAsync()
+        {
+            var applications = await _context.DeniedApplications
+                .Select(a => new DeniedApplicationDto
+                {
+                    Id = a.Id,
+                    Idgosuslug = a.Idgosuslug,
+                    Org = a.Org,
+                    Orgout = a.Orgout,
+                    Orgnumber = a.Orgnumber,
+                    Uslugnumber = a.Uslugnumber,
+                    DateAdd = a.DateAdd,
+                    DateEdit = a.DateEdit,
+                    FileId = a.FileId,
+                    File = a.File,
+                    Status = a.Status
+                })
+                .ToListAsync();
+
+            return new CollectionResult<DeniedApplicationDto>
+            {
+                Data = applications
+            };
+        }
+
+        public async Task<BaseResult<DeniedApplicationDto>> GetDeniedByIdAsync(int id)
+        {
+            var application = await _context.DeniedApplications.FindAsync(id);
+
+            if (application == null)
+                return new BaseResult<DeniedApplicationDto>
+                {
+                    ErrorMessage = "Application not found"
+                };
+
+            var dto = new DeniedApplicationDto
+            {
+                Id = application.Id,
+                Idgosuslug = application.Idgosuslug,
+                Org = application.Org,
+                Orgout = application.Orgout,
+                Orgnumber = application.Orgnumber,
+                Uslugnumber = application.Uslugnumber,
+                DateAdd = application.DateAdd,
+                DateEdit = application.DateEdit,
+                FileId = application.FileId,
+                File = application.File,
+                Status = application.Status
+            };
+
+            return new BaseResult<DeniedApplicationDto>
+            {
+                Data = dto
+            };
+        }
+
+        public async Task<BaseResult<DeniedApplicationDto>> CreateApplicationAsync(DeniedApplicationDto applicationDto)
+        {
+            try
+            {
+                var application = new DeniedApplication
+                {
+                    Idgosuslug = applicationDto.Idgosuslug,
+                    Org = applicationDto.Org,
+                    Orgout = applicationDto.Orgout,
+                    Orgnumber = applicationDto.Orgnumber,
+                    Uslugnumber = applicationDto.Uslugnumber,
+                    DateAdd = DateTime.Now,
+                    DateEdit = DateTime.Now,
+                    FileId = (int)applicationDto.FileId,
+                    Status = DenyStatus.Add
+                };
+
+                _context.DeniedApplications.Add(application);
+                await _context.SaveChangesAsync();
+
+                applicationDto.Id = application.Id;
+                applicationDto.DateAdd = application.DateAdd;
+                applicationDto.DateEdit = application.DateEdit;
+
+                return new BaseResult<DeniedApplicationDto>
+                {
+                    Data = applicationDto
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResult<DeniedApplicationDto>
+                {
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<BaseResult<DeniedApplicationDto>> UpdateApplicationAsync(DeniedApplicationDto applicationDto)
+        {
+            try
+            {
+                var existingApplication = await _context.DeniedApplications.FindAsync(applicationDto.Id);
+
+                if (existingApplication == null)
+                    return new BaseResult<DeniedApplicationDto>
+                    {
+                        ErrorMessage = "Application not found"
+                    };
+
+                existingApplication.Status = applicationDto.Status;
+                existingApplication.DateEdit = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                return new BaseResult<DeniedApplicationDto>
+                {
+                    Data = applicationDto
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResult<DeniedApplicationDto>
                 {
                     ErrorMessage = ex.Message
                 };

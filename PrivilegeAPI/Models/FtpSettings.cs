@@ -6,5 +6,6 @@
         public int Port { get; set; } = 21;
         public string Username { get; set; } = "admin";
         public string Password { get; set; } = "admin";
+        public bool UseTls { get; set; } = false;
     }
 }
