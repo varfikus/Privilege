@@ -123,7 +123,6 @@ namespace PrivilegeAdmin
 
                         dGV.Rows.Add(
                             order.Id,
-                            order.Name ?? "Не указано",
                             statusDisplayName,
                             order.DateAdd.Value.ToString("dd.MM.yyyy HH:mm:ss"),
                             order.DateEdit.Value.ToString("dd.MM.yyyy HH:mm:ss")

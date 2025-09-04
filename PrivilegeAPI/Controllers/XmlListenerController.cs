@@ -27,33 +27,6 @@ namespace PrivilegeAPI.Controllers
             _answerService = answerService;
         }
 
-        //[HttpPost]
-        //[Consumes("text/xml", "application/xml")]
-        //public async Task<IActionResult> ReceiveXml([FromBody] string xmlContent)
-        //{
-        //    var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-
-        //    // if (clientIp != "192.168.1.100")
-        //    // {
-        //    //     return Unauthorized(new { Error = "Request from unauthorized IP address." });
-        //    // }
-
-        //    try
-        //    {
-        //        var application = ParseXml(xmlContent);
-        //        _context.Applications.Add(application);
-        //        await _context.SaveChangesAsync();
-
-        //        await _hubContext.Clients.All.SendAsync("ReceiveMessage", $"XML processed from {clientIp}. ApplicationId: {application.Id}");
-
-        //        return Ok(new { Message = "XML processed and saved to database.", ApplicationId = application.Id });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { Error = $"Error processing XML: {ex.Message}" });
-        //    }
-        //}
-
         [HttpPost]
         [Consumes("application/json", "text/plain")]
         public async Task<IActionResult> ReceiveXml([FromBody] Base64XmlRequest request)

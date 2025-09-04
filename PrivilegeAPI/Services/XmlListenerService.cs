@@ -1,10 +1,15 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using PrivilegeAPI.Context;
 using PrivilegeAPI.Hubs;
 using PrivilegeAPI.Models;
+using System.ComponentModel;
+using System.Data.Entity;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using File = PrivilegeAPI.Models.File;
 
 namespace PrivilegeAPI.Services
@@ -42,7 +47,7 @@ namespace PrivilegeAPI.Services
                 _logger.LogInformation("Starting HttpListener on {Url}", _url);
                 
                 _listener.Start();
-                await Task.Run(() => MonitorFtpFolderAsync("Finali", stoppingToken), stoppingToken);
+                await Task.Run(() => MonitorFtpFoldersAsync(stoppingToken), stoppingToken);
 
                 _logger.LogInformation("HttpListener IsSuccessfully started on {Url}", _url);
 
@@ -135,8 +140,6 @@ namespace PrivilegeAPI.Services
                         xmlContent = body;
                     }
 
-                    _logger.LogDebug("Received XML: {XmlContent}", xmlContent);
-
                     using var scope = _scopeFactory.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
@@ -164,13 +167,6 @@ namespace PrivilegeAPI.Services
 
                     dbContext.Files.Add(file);
                     await dbContext.SaveChangesAsync(cancellationToken);
-
-                    //bool answer = await _answerService.SendAnswerDeliveredAsync(application);
-
-                    //if (!answer)
-                    //{
-                    //    throw new Exception("Failed to send reply.");
-                    //}
 
                     await _hubContext.Clients.All.SendAsync(
                         "ReceiveMessage",
@@ -210,75 +206,294 @@ namespace PrivilegeAPI.Services
             }
         }
 
-        private async Task MonitorFtpFolderAsync(string ftpFolder, CancellationToken cancellationToken)
+        private async Task MonitorFtpFoldersAsync(CancellationToken cancellationToken)
         {
-            var knownFiles = new HashSet<string>();
+            var knownFiles = await LoadKnownFilesAsync();
+            var knownFinals = await LoadKnownFinalsAsync();
 
             while (!cancellationToken.IsCancellationRequested && !_isDisposing)
             {
                 try
                 {
-                    await _ftpService.ConnectAsync();
+                    await _portalService.ConnectAsync();
 
-                    var files = await _portalService.ListDirectoryAsync(ftpFolder);
-                    _logger.LogInformation("FTP folder {FolderPath} checked at {Time}", ftpFolder, DateTime.Now);
+                    var userLogsFiles = await _portalService.ListDirectoryAsync("UserLog");
 
-                    foreach (var file in files)
+                    foreach (var file in userLogsFiles)
                     {
                         var fileName = Path.GetFileName(file);
 
-                        if (!knownFiles.Contains(file) && fileName.StartsWith("Confirmation", StringComparison.OrdinalIgnoreCase))
+                        if (!fileName.Equals("log.htm", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        var localFolder = Path.Combine(AppContext.BaseDirectory, "Applications", "UserLog");
+                        Directory.CreateDirectory(localFolder);
+                        var localPath = Path.Combine(localFolder, fileName);
+
+                        await _portalService.DownloadFileAsync($"UserLog/{fileName}", localPath);
+
+                        var doc = XDocument.Load(localPath);
+                        var rows = doc.Descendants("tr")
+                                      .Where(x => x.Attribute("Type") != null)
+                                      .ToList();
+
+                        var fileLogEvents = new List<FileLogEvent>();
+
+                        foreach (var row in rows)
                         {
-                            _logger.LogInformation("Найден новый Confirmation файл: {File}", fileName);
+                            var type = (string)row.Attribute("Type")!;
+                            var idStr = row.Attribute("ID")?.Value ?? "";
+                            var logFile = row.Attribute("File")?.Value ?? "";
+                            var number = row.Attribute("Number")?.Value ?? "";
 
-                            await _ftpService.ConnectAsync();
+                            if (string.IsNullOrEmpty(idStr))
+                                continue;
 
-                            var localFolder = Path.Combine(AppContext.BaseDirectory, "Applications");
+                            int id = int.Parse(idStr);
+
+                            if (await ExistsInDatabaseAsync(id, type))
+                                continue;
+
+                            var fileLog = new FileLogEvent
+                            {
+                                Id = id,
+                                File = logFile,
+                                Number = number,
+                                Type = type
+                            };
+
+                            await SaveFileLogEventAsync(fileLog.Id, fileLog.File, fileLog.Number, fileLog.Type);
+
+                            fileLogEvents.Add(fileLog);
+                        }
+
+                        var completedIds = await CheckFileLogEventsAsync(fileLogEvents);
+
+                        foreach (var appId in completedIds)
+                        {
+                            await _answerService.SendAnswerDeliveredAsync(appId.ToString());
+                        }
+
+                        await _ftpService.DeleteFileAsync(fileName);
+                    }
+
+                    var otherFolders = new[] { "Finali" };
+
+                    foreach (var ftpFolder in otherFolders)
+                    {
+                        var files = await _portalService.ListDirectoryAsync(ftpFolder);
+
+                        if (!knownFiles.TryGetValue(ftpFolder, out var knownSet))
+                        {
+                            knownSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                            knownFiles[ftpFolder] = knownSet;
+                        }
+
+                        foreach (var file in files)
+                        {
+                            var fileName = Path.GetFileName(file);
+
+                            if (knownFinals.Contains(fileName) || knownSet.Contains(fileName))
+                                continue;
+
+                            _logger.LogInformation("{filesCount} новых файлов, начинаю обработку...", files.Count);
+
+                            var localFolder = Path.Combine(AppContext.BaseDirectory, "Applications", ftpFolder);
                             Directory.CreateDirectory(localFolder);
-
                             var localPath = Path.Combine(localFolder, fileName);
 
-                            await _ftpService.DownloadFileAsync(fileName, localPath);
+                            await _portalService.DownloadFileAsync($"Finali/{fileName}", localPath);
+
+                            var fileDb = new File
+                            {
+                                Name = fileName,
+                                Path = localPath
+                            };
 
                             var xdoc = XDocument.Load(localPath);
+                            XNamespace ns = "http://www.w3.org/1999/xhtml";
+                            var container = xdoc.Descendants(ns + "container").FirstOrDefault();
 
-                            var id = xdoc.Root?.Element("id")?.Value;
-                            var kodorg = xdoc.Root?.Element("kodorg")?.Value;
-                            var kodorgout = xdoc.Root?.Element("kodorgout")?.Value;
-
-                            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(kodorg) || string.IsNullOrWhiteSpace(kodorgout))
+                            if (container == null)
                             {
-                                _logger.LogWarning("Confirmation file {File} is missing required elements: id, kodorg, kodorgout", fileName);
+                                _logger.LogWarning("Элемент <container> не найден в {File}", fileName);
                                 await _ftpService.DeleteFileAsync(fileName);
                                 continue;
                             }
 
-                            var result = await _answerService.ProcessFileAsync(id, kodorg, kodorgout);  
+                            var reg = container.Element(ns + "reg");
+                            if (reg == null)
+                            {
+                                _logger.LogWarning("Элемент <reg> не найден в {File}", fileName);
+                                await _ftpService.DeleteFileAsync(fileName);
+                                continue;
+                            }
+
+                            // Пример стрктуры тэга <reg>:
+                            //<reg>
+                            //    <datareg> 29.08.2025 </datareg>
+                            //    <regnumber> 01-14/07-5 </regnumber>
+                            //    <vhodregnumber> 20250829143539 </vhodregnumber>
+                            //    <vhodregdate> 29.08.2025 </vhodregdate>
+                            //</reg>
+
+                            var dataReg = reg.Element(ns + "datareg")?.Value;
+                            var regNumber = reg.Element(ns + "regnumber")?.Value;
+                            var vhodRegDate = reg.Element(ns + "vhodregdate")?.Value;
+                            var vhodRegNumber = reg.Element(ns + "vhodregnumber")?.Value;
+
+                            if (string.IsNullOrWhiteSpace(dataReg) ||
+                                string.IsNullOrWhiteSpace(regNumber) ||
+                                string.IsNullOrWhiteSpace(vhodRegDate) ||
+                                string.IsNullOrEmpty(vhodRegNumber))
+                            {
+                                _logger.LogWarning("Ответ {File} отклонен (нет обязательных элементов)", fileName);
+                                await _answerService.ProcessAnswerFileAsync(xdoc, fileDb);
+                                await _ftpService.DeleteFileAsync(fileName);
+                                continue;
+                            }
+
+                            var result = await _answerService.ProcessAnswerFileAsync(
+                                xdoc, fileDb, xdoc, dataReg, regNumber, vhodRegNumber.Trim(), vhodRegDate);
+                            if (!result)
+                            {
+                                _logger.LogWarning("Ответ {File} отклонен (ошибка обработки)", fileName);
+                                await _ftpService.DeleteFileAsync(fileName);
+                                continue;
+                            }
 
                             await _ftpService.DeleteFileAsync(fileName);
-                            
-                            _logger.LogInformation("Confirmation: id={Id}, kodorg={Kodorg}, kodorgout={Kodorgout}", id, kodorg, kodorgout);
-
-                            knownFiles.Add(fileName);
+                            knownSet.Add(fileName);
+                            await SaveFinalEventAsync(fileName);
                         }
                     }
 
-                    await _ftpService.DisconnectAsync();
+                    await _portalService.DisconnectAsync();
+
+                    await _hubContext.Clients.All.SendAsync(
+                        "ReceiveMessage",
+                        $"All folders have been checked.",
+                        cancellationToken
+                    );
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Ошибка при проверке FTP папки {FolderPath}", ftpFolder);
+                    _logger.LogError(ex, "Ошибка при проверке FTP");
                 }
 
-                await Task.Delay(TimeSpan.FromMinutes(5), cancellationToken);
+                await Task.Delay(TimeSpan.FromMinutes(2), cancellationToken);
             }
+        }
+
+        public async Task<List<int>> CheckFileLogEventsAsync(List<FileLogEvent> fileLogEvents)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var allLogs = fileLogEvents;
+
+            var completedNumbers = new HashSet<string>();
+
+            foreach (var givingLog in allLogs.Where(l => l.Type == "Giving" && !string.IsNullOrEmpty(l.Number)))
+            {
+                var receivingLog = allLogs.FirstOrDefault(l => l.Id == givingLog.Id && l.Type == "Receiving");
+                completedNumbers.Add(givingLog.Number);
+            }
+
+            if (!completedNumbers.Any())
+            {
+                return new List<int>();
+            }
+
+            var applications = dbContext.Applications
+                .Where(a => completedNumbers.Contains(a.Orgnumber))
+                .ToList();
+
+            var completedIds = applications.Select(a => a.Id).ToList();
+
+            return completedIds;
+        }
+
+        private async Task<Dictionary<string, HashSet<string>>> LoadKnownFilesAsync()
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var processedFiles = dbContext.FileLogEvents
+                .Select(f => new { f.Type, f.Number })
+                .ToList();
+
+            var knownFiles = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var file in processedFiles)
+            {
+                if (!knownFiles.TryGetValue(file.Type, out var set))
+                {
+                    set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    knownFiles[file.Type] = set;
+                }
+                set.Add(file.Number);
+            }
+
+            return knownFiles;
+        }
+
+        private async Task<HashSet<string>> LoadKnownFinalsAsync()
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var processedFinals = dbContext.Finals
+                .Select(f => f.Id)
+                .ToList();
+
+            return new HashSet<string>(processedFinals);
+        }
+
+        private async Task SaveFileLogEventAsync(int id, string file, string number, string type)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var logEvent = new FileLogEvent
+            {
+                Id = id,
+                File = file,
+                Number = number,
+                Type = type
+            };
+
+            dbContext.FileLogEvents.Add(logEvent);
+            await dbContext.SaveChangesAsync();
+        }
+
+        private async Task SaveFinalEventAsync(string id)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var final = new Finals
+            {
+                Id = id
+            };
+
+            dbContext.Finals.Add(final);
+            await dbContext.SaveChangesAsync();
+        }
+
+        public async Task<bool> ExistsInDatabaseAsync(int id, string type)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            return dbContext.FileLogEvents
+                .Any(f => f.Id == id && f.Type == type);
         }
 
         private Application ParseXml(string xmlContent, File file)
         {
             try
             {
-                xmlContent = $"<root>{xmlContent}</root>";
                 XDocument doc = XDocument.Parse(xmlContent);
 
                 XNamespace ns = "http://www.w3.org/1999/xhtml";
@@ -340,59 +555,6 @@ namespace PrivilegeAPI.Services
                 throw new Exception($"Failed to parse XML: {ex.Message}", ex);
             }
         }
-
-        //private Application ParseXml(string xmlContent, File file)
-        //{
-        //    try
-        //    {
-        //        xmlContent = $"<root>{xmlContent}</root>";
-        //        XDocument doc = XDocument.Parse(xmlContent);
-
-        //        XNamespace ns = "http://www.w3.org/1999/xhtml";
-
-        //        var htmlx = doc.Root?.Element(ns + "htmlx")
-        //                    ?? throw new Exception("Missing <htmlx> element");
-
-        //        var body2 = htmlx.Element(ns + "body2")
-        //                    ?? throw new Exception("Missing <body2> element");
-
-        //        var container = body2.Element(ns + "container")
-        //                        ?? throw new Exception("Missing <container> element");
-
-        //        var persData = container
-        //            .Element(ns + "topheader")
-        //            ?.Element(ns + "tophead")
-        //            ?.Element(ns + "pers_data")
-        //            ?? throw new Exception("Missing <pers_data> element");
-
-        //        string fam = persData.Element(ns + "fam")?.Value ?? "";
-        //        string im = persData.Element(ns + "im")?.Value ?? "";
-        //        string ot = persData.Element(ns + "ot")?.Value ?? "";
-
-        //        string fullName = $"{fam} {im} {ot}".Trim();
-        //        if (string.IsNullOrWhiteSpace(fullName))
-        //            throw new Exception("FullName is required");
-
-        //        string dateString = container.Element(ns + "dateblank")?.Value;
-        //        if (!DateTime.TryParse(dateString, out DateTime applicationDate))
-        //        {
-        //            throw new Exception("Invalid or missing ApplicationDate");
-        //        }
-
-        //        return new Application
-        //        {
-        //            Name = fullName,
-        //            Status = StatusEnum.Delivered,
-        //            DateAdd = applicationDate,
-        //            DateEdit = DateTime.Now,
-        //            File = file
-        //        };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception($"Failed to parse XML: {ex.Message}", ex);
-        //    }
-        //}
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {

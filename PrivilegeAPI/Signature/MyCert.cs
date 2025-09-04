@@ -86,10 +86,15 @@ namespace PrivilegeAPI
             string name = "XFileName50900X.cer";
             using (BinaryWriter writer = new BinaryWriter(File.Open(name, FileMode.OpenOrCreate)))
             {
-
                 writer.Write(certBytes);
             }
             Process.Start(name);
+        }
+
+        public byte[] GetCert()
+        {
+            byte[] certBytes = Cert.GetRawCertData();
+            return certBytes;
         }
 
         public override string ToString()

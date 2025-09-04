@@ -165,31 +165,29 @@ namespace PrivilegeAPI
         /// <param name="seleCert">Выбранный сертифекат</param>
         /// <param name="oldSignature">Старая подпись</param>
         /// <returns>Подпись к данным</returns>
-        public static XmlDocument FileSignCadesBesX(XmlDocument xmlDocument, MyCert seleCert)
+        public static XmlDocument FileSignCadesBesX(XmlDocument xmlDocument, MyCert cert, string TSPadres = null, string Packaging = null, string ID = null)
         {
-            X509Certificate2 certificate = GetCertificate(seleCert);
+            X509Certificate2 certificate = GetCertificate(cert);
 
-            SignaturePackaging signaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
+            APB.CryptoLib.Xades.Signature.Parameters.SignaturePackaging signaturePackaging = APB.CryptoLib.Xades.Signature.Parameters.SignaturePackaging.ENVELOPED;
+
             APB.CryptoLib.Xades.Upgraders.SignatureFormat signatureFormat = APB.CryptoLib.Xades.Upgraders.SignatureFormat.XAdES_BES;
             SignatureMethod signatureMethod = SignatureMethod.RSAwithSHA256;
 
-            string TSPadres = "";
-            //if (MyStatic.UseTSP) //if (Properties.Settings.Default.UseTSP)
-            //{
-            //    signatureFormat = APB.CryptoLib.Xades.Upgraders.SignatureFormat.XAdES_T;
-            //    TSPadres = Properties.Settings.Default.AdressTSP;
-            //}
+            TSPadres = "http://ca.agroprombank.com/tsa";
+            if (TSPadres != null) signatureFormat = APB.CryptoLib.Xades.Upgraders.SignatureFormat.XAdES_T;
+
+            string signatureID = "electronic-document";
+            if (ID != null) signatureID = ID;
 
             try
             {
-                XmlDocument signedDocument = XadesSign.SignXml(xmlDocument, certificate, signaturePackaging, signatureMethod, signatureFormat, TSPadres, "electronic-document");
+                XmlDocument signedDocument = XadesSign.SignXml(xmlDocument, certificate, signaturePackaging, signatureMethod, signatureFormat, TSPadres, signatureID);
                 return signedDocument;
             }
             catch (Exception ex)
             {
-                Logger.LogError("Возникла ошибка при попытке осуществить поддписание документа: " + ex.Message);
-
-                return xmlDocument;
+                throw new Exception("Возникла ошибка при попытке осуществить поддписание документа: " + ex.Message);
             }
         }
 
@@ -246,7 +244,7 @@ namespace PrivilegeAPI
         /// <param name="allText">Все атрибуты, хранящиеся в свойстве SubjectName</param>
         /// <param name="paramName">Имя искомого атрибута (CN, T, OU, O, STREET, E, L, C, S, SN) </param>
         /// <returns>Значение атрибута</returns>
-        private static string Get_Value(string allText, string paramName)
+        public static string Get_Value(string allText, string paramName)
         {
             try
             {
@@ -274,7 +272,7 @@ namespace PrivilegeAPI
         /// <param name="allText">Все атрибуты, хранящиеся в свойстве SubjectName</param>
         /// <param name="paramName">Имя искомого атрибута (CN, T, OU, O, STREET, E, L, C, S, SN) </param>
         /// <returns>Значение атрибута</returns>
-        private static string Get_Thumbprint(X509Certificate2 certificate)
+        public static string Get_Thumbprint(X509Certificate2 certificate)
         {
             try
             {

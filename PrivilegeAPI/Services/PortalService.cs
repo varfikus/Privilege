@@ -31,15 +31,25 @@ namespace PrivilegeAPI.Services
             return new FtpService(settings);
         }
 
+        public async Task ConnectAsync()
+        {
+            var ftpService = CreateFtpService("192.168.69.38", 21, "gosuslugi_ishodiashie", "LcrF00MCjT", false);
+            await ftpService.ConnectAsync();
+        }
+
+        public async Task DisconnectAsync()
+        {
+            var ftpService = CreateFtpService("192.168.69.38", 21, "gosuslugi_ishodiashie", "LcrF00MCjT", false);
+            await ftpService.DisconnectAsync();
+        }
+
         public async Task<bool> SaveFileAsync(string remotePath, string content)
         {
             var ftpService = CreateFtpService("192.168.69.38", 21, "gosuslugi_ishodiashie", "LcrF00MCjT", false);
             try
             {
                 await ftpService.ConnectAsync();
-                Console.WriteLine("Connected to FTP server.");
                 var result = await ftpService.SaveFileAsync(remotePath, content);
-                Console.WriteLine("File saved: " + result);
                 await ftpService.DisconnectAsync();
                 return result;
             }
@@ -79,7 +89,7 @@ namespace PrivilegeAPI.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Ошибка при получении списка каталога: " + ex.Message);
+                Console.WriteLine("Error with getting catalog list: " + ex.Message);
                 return new List<string>();
             }
         }

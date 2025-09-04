@@ -8,10 +8,14 @@
 
   <ItemGroup>
     <None Remove="template\confirmation.xml" />
+    <None Remove="template\param.xml" />
     <None Remove="template\template.xml" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="template\deny.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="template\template.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -20,6 +24,12 @@
   <ItemGroup>
     <Content Include="template\confirmation.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="template\param.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
@@ -33,8 +43,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+    <PackageReference Include="RestSharp" Version="104.1.0" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.8" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.8" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,13 +56,24 @@
 
   <ItemGroup>
     <Reference Include="APB.CryptoLib.Certificates">
-      <HintPath>..\..\..\Users\ikv\Downloads\Услуги\Услуги\ГА\stateadministration-service_step\stateadministration-service_step\UserState\bin\Debug\net8.0-windows\APB.CryptoLib.Certificates.dll</HintPath>
+      <HintPath>bin\Debug\net8.0\APB.CryptoLib.Certificates.dll</HintPath>
+      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="APB.CryptoLib.Core">
-      <HintPath>..\..\..\Users\ikv\Downloads\Услуги\Услуги\ГА\stateadministration-service_step\stateadministration-service_step\UserState\bin\Debug\net8.0-windows\APB.CryptoLib.Core.dll</HintPath>
+      <HintPath>bin\Debug\net8.0\APB.CryptoLib.Core.dll</HintPath>
+      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="APB.CryptoLib.Utils.Core">
-      <HintPath>..\..\..\Users\ikv\Downloads\Услуги\Услуги\ГА\stateadministration-service_step\stateadministration-service_step\UserState\bin\Debug\net8.0-windows\APB.CryptoLib.Utils.Core.dll</HintPath>
+      <HintPath>bin\Debug\net8.0\APB.CryptoLib.Utils.Core.dll</HintPath>
+      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="Microsoft.Xades.Core">
+      <HintPath>bin\Debug\net8.0\Microsoft.Xades.Core.dll</HintPath>
+      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
   </ItemGroup>
 

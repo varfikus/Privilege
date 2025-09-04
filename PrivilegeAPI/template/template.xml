@@ -64,7 +64,7 @@
 			</resolutions>
 			<control></control>
 			<header></header>
-			<content></content>
+			<content>$$$</content>
 			<applications></applications>
 			<signaturestextinfo>
 				<post></post>
@@ -95,7 +95,7 @@
 			<docstatus>
 				<inthecase></inthecase>
 				<numbercase></numbercase>
-				<datedocexecutor></datedocexecutor>
+				<datedocexecutor>$$$</datedocexecutor>
 				<numberdocexecutor></numberdocexecutor>
 				<summaryperformance></summaryperformance>
 				<post></post>
@@ -108,7 +108,7 @@
 				<regnumber></regnumber>
 			</receiptmarkdoc>
 			<kodformdoc></kodformdoc>
-			<kodorg>1</kodorg>
+			<kodorg></kodorg>
 			<style>
 				Signature {
 				display:none !important;

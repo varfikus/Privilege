@@ -293,6 +293,41 @@ namespace PrivilegeUI
             OpenChildForm(new FormAnsNeg(_apiClient, app, this));
         }
 
+        private async void btn_denyAnswer_Click(object sender, EventArgs e)
+        {
+            if (dGV.CurrentRow == null)
+            {
+                MessageBox.Show("Выберите строку для отображения информации.", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!int.TryParse(dGV.CurrentRow.Cells["id"].Value?.ToString(), out int id))
+            {
+                MessageBox.Show("Не удалось определить ID заявки.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var app = _applications?.FirstOrDefault(a => a.Id == id);
+
+            if (app == null)
+            {
+                MessageBox.Show("Заявка не найдена в списке.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var applicationDto = new DeniedApplicationDto
+            {
+                Id = app.Id,
+                Idgosuslug = app.Idgosuslug,
+                Status = DenyStatus.Delivered,
+                DateAdd = app.DateAdd,
+                DateEdit = DateTime.Now,
+                File = app.File
+            };
+
+            var result = await _apiClient.PutAsync<DeniedApplicationDto, BaseResult<DeniedApplicationDto>>("api/deniedapplications/deny", applicationDto);
+        }
+
         private void btn_archive_Click(object sender, EventArgs e)
         {
             if (backgroundWorker1.IsBusy)
@@ -448,6 +483,7 @@ namespace PrivilegeUI
                         btn_denial.Visible = true;
                         btn_finaly.Visible = false;
                         btn_cancel.Visible = false;
+                        btn_denyAnswer.Visible = false;
                         statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
                         statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
                         break;
@@ -457,6 +493,7 @@ namespace PrivilegeUI
                         btn_denial.Visible = false;
                         btn_finaly.Visible = true;
                         btn_cancel.Visible = true;
+                        btn_denyAnswer.Visible = false;
                         statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
                         statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
                         break;
@@ -466,6 +503,7 @@ namespace PrivilegeUI
                         btn_denial.Visible = false;
                         btn_finaly.Visible = false;
                         btn_cancel.Visible = true;
+                        btn_denyAnswer.Visible = false;
                         statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
                         statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
                         break;
@@ -475,6 +513,7 @@ namespace PrivilegeUI
                         btn_denial.Visible = false;
                         btn_finaly.Visible = false;
                         btn_cancel.Visible = false;
+                        btn_denyAnswer.Visible = false;
                         statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
                         statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
                         break;
@@ -484,6 +523,7 @@ namespace PrivilegeUI
                         btn_denial.Visible = false;
                         btn_finaly.Visible = false;
                         btn_cancel.Visible = false;
+                        btn_denyAnswer.Visible = false;
                         statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
                         statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
                         break;
@@ -494,6 +534,7 @@ namespace PrivilegeUI
                         btn_denial.Visible = false;
                         btn_finaly.Visible = false;
                         btn_cancel.Visible = false;
+                        btn_denyAnswer.Visible = false;
                         statusCell.Style.SelectionBackColor = statusCell.Style.BackColor;
                         statusCell.Style.SelectionForeColor = statusCell.Style.ForeColor;
                         break;
@@ -507,6 +548,7 @@ namespace PrivilegeUI
             btn_finaly.Visible = show;
             btn_apply.Visible = show;
             btn_denial.Visible = show;
+            btn_denyAnswer.Visible = !show;
         }
 
         #endregion
@@ -632,9 +674,9 @@ namespace PrivilegeUI
 
             dGV.Columns.Add(new DataGridViewTextBoxColumn
             {
-                HeaderText = "Имя",
-                DataPropertyName = "Name",
-                Name = "Name",
+                HeaderText = "Номер",
+                DataPropertyName = "Idgosuslug",
+                Name = "Idgosuslug",
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells
             });
 
@@ -700,7 +742,7 @@ namespace PrivilegeUI
                     {
                         dGV.Rows.Add(
                             app.Id,
-                            app.Name,
+                            app.Idgosuslug,
                             EnumHelper.GetEnumDisplayName(app.Status),
                             app.Status,
                             app.DateAdd,
@@ -745,7 +787,7 @@ namespace PrivilegeUI
                     {
                         dGV.Rows.Add(
                             app.Id,
-                            app.Name,
+                            app.Idgosuslug,
                             EnumHelper.GetEnumDisplayName(app.Status),
                             app.Status,
                             app.DateAdd,

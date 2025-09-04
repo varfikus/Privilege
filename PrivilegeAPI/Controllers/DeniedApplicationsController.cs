@@ -9,6 +9,7 @@ using PrivilegeAPI.Hubs;
 using PrivilegeAPI.Interfaces;
 using PrivilegeAPI.Models;
 using PrivilegeAPI.Result;
+using PrivilegeAPI.Services;
 using System.Data.Entity;
 using System.Net;
 using System.Text;
@@ -25,12 +26,14 @@ namespace PrivilegeAPI.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IApplicationService _applicationService;
         private readonly IHubContext<XmlProcessingHub> _hubContext;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public DeniedApplicationsController(ApplicationDbContext context, IHubContext<XmlProcessingHub> hubContext, IApplicationService applicationService)
+        public DeniedApplicationsController(ApplicationDbContext context, IHubContext<XmlProcessingHub> hubContext, IApplicationService applicationService, IServiceScopeFactory scopeFactory)
         {
             _context = context;
             _hubContext = hubContext;
             _applicationService = applicationService;
+            _scopeFactory = scopeFactory;
         }
 
         [HttpGet]
@@ -79,6 +82,27 @@ namespace PrivilegeAPI.Controllers
                 return BadRequest(result);
 
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", $"Application {updatedApplication.Id} updated");
+
+            return Ok(result);
+        }
+
+        [HttpPut("deny")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<BaseResult>> DenyApplication([FromBody] DeniedApplicationDto deniedApplication)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var service = scope.ServiceProvider.GetRequiredService<AnswerService>();
+
+            var result = await _applicationService.UpdateApplicationAsync(deniedApplication);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            var resultS = await service.SendDeny(deniedApplication);
+            if (!resultS)
+                return BadRequest(resultS);
+
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", $"Application {deniedApplication.Id} denied");
 
             return Ok(result);
         }

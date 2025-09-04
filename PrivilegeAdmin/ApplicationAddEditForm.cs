@@ -95,7 +95,6 @@ namespace PrivilegeAdmin
 
             var dto = new ApplicationDto
             {
-                Name = textBoxFio.Text,
                 Status = (StatusEnum)comboBoxStatus.SelectedValue,
                 DateEdit = DateTime.Now
             };
@@ -159,7 +158,6 @@ namespace PrivilegeAdmin
                 var order = result.Data;
 
                 textBoxOrderId.Text = order.Id.ToString();
-                textBoxFio.Text = order.Name;
                 comboBoxStatus.SelectedValue = order.Status;
             }
             catch (HttpRequestException httpEx)
