@@ -166,12 +166,15 @@ namespace PrivilegeAPI.Services
             }
         }
 
-        public async Task<XDocument> SendToMedAsync(string xmlContent)
+        public async Task<string> SendToMedAsync(string xmlContent)
         {
             try
             {
                 string fileName = $"{DateTime.Now:yyyyMMddHHmmss}";
-                XDocument xdoc = XDocument.Parse(xmlContent);
+                XDocument xdoc = XDocument.Parse(xmlContent, LoadOptions.PreserveWhitespace);
+                if (xdoc.Declaration == null)
+                    xdoc.Declaration = new XDeclaration("1.0", "UTF-8", null);
+
                 XNamespace ns = "http://www.w3.org/1999/xhtml";
 
                 var container = xdoc.Descendants(ns + "container").FirstOrDefault();
@@ -187,27 +190,27 @@ namespace PrivilegeAPI.Services
                 var reg = container.Element(ns + "reg");
                 if (reg != null)
                 {
-                    var dataReg = reg.Element(ns + "datareg");
-                    if (dataReg != null) dataReg.Value = $"{DateTime.Now}";
-
-                    var regNumber = reg.Element(ns + "regnumber");
-                    if (regNumber != null) regNumber.Value = fileName;
+                    reg.Element(ns + "datareg")?.SetValue(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
+                    reg.Element(ns + "regnumber")?.SetValue(fileName);
 
                     var uslugNumber = reg.Element(ns + "uslugnumber");
                     if (uslugNumber != null && !string.IsNullOrEmpty(idgosuslug))
-                    {
-                        uslugNumber.Value = idgosuslug;
-                    }
+                        uslugNumber.SetValue(idgosuslug);
                 }
 
-                XDocument signedDoc = SignDocument(xdoc);
+                if (container.Attribute("id") == null)
+                    container.SetAttributeValue("id", "electronic-document");
+
+                if (container.Attribute("style") == null)
+                    container.SetAttributeValue("style", "display: none;");
+
+                string signedXml = SignDocument(xdoc);
 
                 string ftpFilePath = $"/Ishodishie/{fileName}.xml";
-                await _portalService.SaveFileAsync(ftpFilePath, signedDoc.ToString());
-                await _ftpService.SaveFileAsync($"Applications/Med/{fileName}.xml", signedDoc.ToString());
+                //await _portalService.SaveFileAsync(ftpFilePath, signedXml.ToString());
+                await _ftpService.SaveFileAsync($"Applications/Med/{fileName}.xml", signedXml);
 
-
-                return xdoc;
+                return signedXml;
             }
             catch (Exception ex)
             {
@@ -327,38 +330,104 @@ namespace PrivilegeAPI.Services
             return deniedApplication;
         }
 
-        public XDocument SignDocument(XDocument document)
+        public XmlDocument SignDocument(XmlDocument xmlDoc)
         {
             try
             {
                 List<MyCert> certs = Crypto.GelAllCertificates();
-                var cert = certs.FirstOrDefault();
-
+                var cert = certs.FirstOrDefault(c => c.ShortName == "Organizatsiya_1");
                 if (cert == null)
-                {
-                    _logger.LogWarning("Сертификат для подписи не найден");
-                    return document;
-                }
+                    throw new Exception("Сертификат для подписи не найден");
 
-                XmlDocument xmlDoc = new XmlDocument { PreserveWhitespace = true };
-                using (var reader = document.CreateReader())
-                {
-                    xmlDoc.Load(reader);
-                }
+                XmlDocument signedXml = Crypto.FileSignCadesBesX(xmlDoc, cert);
 
-                xmlDoc = Crypto.FileSignCadesBesX(xmlDoc, cert);
-
-                using (var nodeReader = new XmlNodeReader(xmlDoc))
-                {
-                    return XDocument.Load(nodeReader);
-                }
+                return signedXml;
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Ошибка при подписании документа: {ex}");
-                return document;
+                throw;
             }
         }
+
+        public string SignDocument(XDocument xdoc)
+        {
+            try 
+            {
+                List<MyCert> certs = Crypto.GelAllCertificates();
+                var cert = certs.FirstOrDefault(c => c.ShortName == "Organizatsiya_1");
+                if (cert == null) throw new Exception("Сертификат не найден");
+
+                var xmlDoc = new XmlDocument();
+                xmlDoc = PortalHelper.ToXmlDocument(xdoc);
+
+                var signedDoc = Crypto.FileSignCadesBesX(xmlDoc, cert);
+
+                return signedDoc.OuterXml;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Ошибка при подписании документа: {ex}");
+                throw;
+            }
+        }
+
+        public void SignXmlFile(string inputFilePath, string outputFilePath)
+        {
+            try
+            {
+                List<MyCert> certs = Crypto.GelAllCertificates();
+                var cert = certs.FirstOrDefault(c => c.ShortName == "Organizatsiya_1");
+                if (cert == null)
+                    throw new Exception($"Сертификат \"Organizatsiya_1\" не найден");
+
+                var xmlDoc = new XmlDocument
+                {
+                    PreserveWhitespace = true
+                };
+                xmlDoc.Load(inputFilePath);
+
+                var signedDoc = Crypto.FileSignCadesBesX(xmlDoc, cert);
+
+                signedDoc.Save(outputFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Ошибка при подписании документа: {ex}");
+                throw;
+            }
+        }
+
+        //try
+        //{
+        //    List<MyCert> certs = Crypto.GelAllCertificates();
+        //    var cert = certs.FirstOrDefault();
+
+        //    if (cert == null)
+        //    {
+        //        _logger.LogWarning("Сертификат для подписи не найден");
+        //        return document;
+        //    }
+
+        //    XmlDocument xmlDoc = new XmlDocument { PreserveWhitespace = true };
+        //    using (var reader = document.CreateReader())
+        //    {
+        //        xmlDoc.Load(reader);
+        //    }
+
+        //    xmlDoc = Crypto.FileSignCadesBesX(xmlDoc, cert);
+
+        //    using (var nodeReader = new XmlNodeReader(xmlDoc))
+        //    {
+        //        return XDocument.Load(nodeReader);
+        //    }
+        //}
+        //catch (Exception ex)
+        //{
+        //    _logger.LogError($"Ошибка при подписании документа: {ex}");
+        //    return document;
+        //}
+        //}
 
         private string FillConfirmationTemplate(Application app)
         {

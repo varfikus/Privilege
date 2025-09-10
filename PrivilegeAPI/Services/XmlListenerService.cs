@@ -161,6 +161,8 @@ namespace PrivilegeAPI.Services
                         dbContext.Files.Add(file);
                         dbContext.Applications.Add(application);
                         await dbContext.SaveChangesAsync(cancellationToken);
+
+                        _logger.LogInformation("Application from {ClientIp} saved to database with ID {ApplicationId}", clientIp, application.Idgosuslug);
                     }
 
                     await _ftpService.SaveFileAsync(virtualPath, xmlContent);
@@ -498,7 +500,7 @@ namespace PrivilegeAPI.Services
 
                 XNamespace ns = "http://www.w3.org/1999/xhtml";
 
-                var htmlx = doc.Root?.Element(ns + "htmlx")
+                var htmlx = doc.Root
                             ?? throw new Exception("Missing <htmlx> element");
 
                 var body2 = htmlx.Element(ns + "body2")

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using PrivilegeAPI.Context;
+using PrivilegeAPI.Helpers;
 using PrivilegeAPI.Hubs;
 using PrivilegeAPI.Models;
 using PrivilegeAPI.Services;
@@ -53,6 +54,7 @@ namespace PrivilegeAPI.Controllers
                 };
 
                 await _ftpService.SaveFileAsync(file.Path, xmlContent);
+
                 _context.Files.Add(file);
                 await _context.SaveChangesAsync();
 
@@ -62,19 +64,20 @@ namespace PrivilegeAPI.Controllers
                     throw new Exception("Ошибка при формировании документа для MED.");
                 }
 
-                var application = ParseXml(signedDoc.ToString(), file);
+                var application = ParseXml(signedDoc, file);
                 application.FileId = file.Id;
 
                 _context.Applications.Add(application);
                 await _context.SaveChangesAsync();
+
+                Console.WriteLine($"Received XML {application.Idgosuslug}");
 
                 await _hubContext.Clients.All.SendAsync("ReceiveMessage",
                     $"XML processed from {clientIp}.");
 
                 return Ok(new
                 {
-                    Message = "XML processed and saved to database.",
-                    ApplicationId = application.Id
+                    Status = "Ok"
                 });
             }
             catch (FormatException)
@@ -91,12 +94,11 @@ namespace PrivilegeAPI.Controllers
         {
             try
             {
-                xmlContent = $"<root>{xmlContent}</root>";
                 XDocument doc = XDocument.Parse(xmlContent);
 
                 XNamespace ns = "http://www.w3.org/1999/xhtml";
 
-                var htmlx = doc.Root?.Element(ns + "htmlx")
+                var htmlx = doc.Root
                             ?? throw new Exception("Missing <htmlx> element");
 
                 var body2 = htmlx.Element(ns + "body2")
