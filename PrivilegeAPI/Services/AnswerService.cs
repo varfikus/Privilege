@@ -51,48 +51,81 @@ namespace PrivilegeAPI.Services
                 string signature = "";
                 string filePath = "";
 
-                List<MyCert> cert = Crypto.GelAllCertificates();
-                foreach (var c in cert)
+                List<MyCert> certs = Crypto.GelAllCertificates();
+                if (certs == null || certs.Count == 0)
+                {
+                    _logger.LogError("Сертификаты не найдены");
+                    return false;
+                }
+
+                foreach (var c in certs)
                 {
                     if (c.ShortName == "Organizatsiya_1")
                     {
-                        File.Copy(app.File.Path, $"C:\\ftp\\dss\\{app.File.Name}", overwrite: true);
-                        filePath = $"C:\\ftp\\dss\\{app.File.Name}";
+                        try
+                        {
+                            filePath = $"C:\\ftp\\dss\\{app.File.Name}";
+                            File.Copy(app.File.Path, filePath, overwrite: true);
+                        }
+                        catch (Exception copyEx)
+                        {
+                            _logger.LogError(copyEx, "Ошибка при копировании файла");
+                            return false;
+                        }
 
                         string fileParam = PortalHelper.GetFileParam();
-                        if (fileParam != "")
+
+                        try
                         {
-                            fileParam = fileParam.Replace("<container></container>", "<container>" + param + "</container>");
-                            signature =
-                                PortalHelper.GetSignaturesFromStream(
-                                    Crypto.FileSignCadesBes(PortalHelper.GenerateStreamFromString(fileParam), c));
-                        }
-                        else
-                        {
-                            using (Stream stream = PortalHelper.GenerateStreamFromString(param))
+                            if (!string.IsNullOrEmpty(fileParam))
                             {
-                                signature = PortalHelper.GenerateStringFromStream(Crypto.FileSignCadesBes(stream, c));
+                                fileParam = fileParam.Replace("<container></container>", "<container>" + param + "</container>");
+
+                                signature = PortalHelper.GetSignaturesFromStream(
+                                    Crypto.FileSignCadesBes(PortalHelper.GenerateStreamFromString(fileParam), c));
                             }
+                            else
+                            {
+                                using (Stream stream = PortalHelper.GenerateStreamFromString(param))
+                                {
+                                    signature = PortalHelper.GenerateStringFromStream(Crypto.FileSignCadesBes(stream, c));
+                                }
+                            }
+                        }
+                        catch (Exception signEx)
+                        {
+                            _logger.LogError(signEx, "Ошибка при подписании данных");
+                            return false;
                         }
                     }
                 }
 
+                if (string.IsNullOrEmpty(signature))
+                {
+                    _logger.LogError("Не удалось сформировать подпись. Отправка отменена.");
+                    return false;
+                }
+
                 if (await PortalHelper.SendToPortalReply(param, signature, filePath))
                 {
+                    XmlDocument xdocS = PortalHelper.ToXmlDocument(xdoc);
+                    await _ftpService.SaveFileAsync($"Applications/Final/Application_" + app.Orgnumber + ".xml}", xdocS.InnerXml);
+
                     return true;
                 }
                 else
                 {
-                    _logger.LogWarning($"Ошибка при отправке сообщения");
+                    _logger.LogError("Ошибка при отправке сообщения. Параметры:\nparam={Param}\nsignatureLength={SignatureLen}\nfilePath={FilePath}",
+                        param, signature?.Length, filePath);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Ошибка при отправке документа: {ex}");
+                _logger.LogError(ex, "Ошибка при отправке документа");
                 return false;
             }
-        }   
+        }
 
         public async Task<bool> SendAnswerDeliveredAsync(string id)
         {
@@ -115,13 +148,13 @@ namespace PrivilegeAPI.Services
                 string param = "{\"serviceId\":\"" + idgu + "\", \"serviceResult\":1}";
                 string signature = "";
                 string filePath = "";
+                XmlDocument xmlDocument = new XmlDocument();
 
                 List<MyCert> cert = Crypto.GelAllCertificates();
                 foreach (var c in cert)
                 {
                     if (c.ShortName == "Organizatsiya_1")
                     {
-                        XmlDocument xmlDocument = new XmlDocument();
                         xmlDocument.LoadXml(PortalHelper.DocGener());
                         xmlDocument = Crypto.FileSignCadesBesX(xmlDocument, c);
                         filePath = "C:\\ftp\\dss\\Уведомление_" + DateTime.Now.ToString("o").Replace(":", "") + ".xml";
@@ -151,6 +184,9 @@ namespace PrivilegeAPI.Services
                     dbContext.Applications.Update(app);
                     await dbContext.SaveChangesAsync();
 
+                    await _ftpService.SaveFileAsync($"Applications/Reply/Application_" + app.Orgnumber + ".xml}", xmlDocument.InnerXml);
+                    await _ftpService.DisconnectAsync();
+
                     return true;
                 }
                 else
@@ -171,9 +207,9 @@ namespace PrivilegeAPI.Services
             try
             {
                 string fileName = $"{DateTime.Now:yyyyMMddHHmmss}";
+                var filePath = $"C:\\ftp\\dss\\{fileName}.xml";
+
                 XDocument xdoc = XDocument.Parse(xmlContent, LoadOptions.PreserveWhitespace);
-                if (xdoc.Declaration == null)
-                    xdoc.Declaration = new XDeclaration("1.0", "UTF-8", null);
 
                 XNamespace ns = "http://www.w3.org/1999/xhtml";
 
@@ -204,10 +240,12 @@ namespace PrivilegeAPI.Services
                 if (container.Attribute("style") == null)
                     container.SetAttributeValue("style", "display: none;");
 
-                string signedXml = SignDocument(xdoc);
+                PortalHelper.SaveFile(xdoc, filePath);
+
+                string signedXml = SignDocument(filePath);
 
                 string ftpFilePath = $"/Ishodishie/{fileName}.xml";
-                //await _portalService.SaveFileAsync(ftpFilePath, signedXml.ToString());
+                await _portalService.SaveFileAsync(ftpFilePath, signedXml);
                 await _ftpService.SaveFileAsync($"Applications/Med/{fileName}.xml", signedXml);
 
                 return signedXml;
@@ -216,6 +254,62 @@ namespace PrivilegeAPI.Services
             {
                 _logger.LogError($"Ошибка при отправке документа в МЭД: {ex}");
                 return null;
+            }
+        }
+
+        public async Task<bool> SendToMedAsync(Application application)
+        {
+            try
+            {
+                string fileName = $"{DateTime.Now:yyyyMMddHHmmss}";
+                var filePath = $"C:\\ftp\\dss\\{fileName}.xml";
+                var xmlContent = PortalHelper.GetStringFromFile($"Applications/New/Application_{application.Orgnumber}.xml");
+
+                XDocument xdoc = XDocument.Parse(xmlContent, LoadOptions.PreserveWhitespace);
+
+                XNamespace ns = "http://www.w3.org/1999/xhtml";
+
+                var container = xdoc.Descendants(ns + "container").FirstOrDefault();
+                if (container == null)
+                {
+                    _logger.LogWarning("Элемент <container> не найден");
+                    return false;
+                }
+
+                var servInfo = xdoc.Descendants(ns + "servinfo").FirstOrDefault();
+                var idgosuslug = servInfo?.Element(ns + "idgosuslug")?.Value;
+
+                var reg = container.Element(ns + "reg");
+                if (reg != null)
+                {
+                    reg.Element(ns + "datareg")?.SetValue(DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss"));
+                    reg.Element(ns + "regnumber")?.SetValue(fileName);
+
+                    var uslugNumber = reg.Element(ns + "uslugnumber");
+                    if (uslugNumber != null && !string.IsNullOrEmpty(idgosuslug))
+                        uslugNumber.SetValue(idgosuslug);
+                }
+
+                if (container.Attribute("id") == null)
+                    container.SetAttributeValue("id", "electronic-document");
+
+                if (container.Attribute("style") == null)
+                    container.SetAttributeValue("style", "display: none;");
+
+                PortalHelper.SaveFile(xdoc, filePath);
+
+                string signedXml = SignDocument(filePath);
+
+                string ftpFilePath = $"/Ishodishie/{fileName}.xml";
+                await _portalService.SaveFileAsync(ftpFilePath, signedXml);
+                await _ftpService.SaveFileAsync($"Applications/Med/{fileName}.xml", signedXml);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Ошибка при отправке документа в МЭД: {ex}");
+                return false;
             }
         }
 
@@ -350,7 +444,7 @@ namespace PrivilegeAPI.Services
             }
         }
 
-        public string SignDocument(XDocument xdoc)
+        public string SignDocument(string filepath)
         {
             try 
             {
@@ -358,38 +452,29 @@ namespace PrivilegeAPI.Services
                 var cert = certs.FirstOrDefault(c => c.ShortName == "Organizatsiya_1");
                 if (cert == null) throw new Exception("Сертификат не найден");
 
-                var xmlDoc = new XmlDocument();
-                xmlDoc = PortalHelper.ToXmlDocument(xdoc);
+                XmlDocument xmlDoc = new XmlDocument { PreserveWhitespace = true };
+                xmlDoc.Load(filepath);
+                xmlDoc = Crypto.FileSignCadesBesX(xmlDoc, cert);
 
-                var signedDoc = Crypto.FileSignCadesBesX(xmlDoc, cert);
-
-                return signedDoc.OuterXml;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Ошибка при подписании документа: {ex}");
-                throw;
-            }
-        }
-
-        public void SignXmlFile(string inputFilePath, string outputFilePath)
-        {
-            try
-            {
-                List<MyCert> certs = Crypto.GelAllCertificates();
-                var cert = certs.FirstOrDefault(c => c.ShortName == "Organizatsiya_1");
-                if (cert == null)
-                    throw new Exception($"Сертификат \"Organizatsiya_1\" не найден");
-
-                var xmlDoc = new XmlDocument
+                var decl = xmlDoc.FirstChild as XmlDeclaration;
+                if (decl == null)
                 {
-                    PreserveWhitespace = true
+                    decl = xmlDoc.CreateXmlDeclaration("1.0", "UTF-8", null);
+                    xmlDoc.InsertBefore(decl, xmlDoc.DocumentElement);
+                }
+
+                using var ms = new MemoryStream();
+                var settings = new XmlWriterSettings
+                {
+                    Encoding = new UTF8Encoding(false),
+                    Indent = false
                 };
-                xmlDoc.Load(inputFilePath);
+                using (var writer = XmlWriter.Create(ms, settings))
+                {
+                    xmlDoc.Save(writer);
+                }
 
-                var signedDoc = Crypto.FileSignCadesBesX(xmlDoc, cert);
-
-                signedDoc.Save(outputFilePath);
+                return Encoding.UTF8.GetString(ms.ToArray());
             }
             catch (Exception ex)
             {

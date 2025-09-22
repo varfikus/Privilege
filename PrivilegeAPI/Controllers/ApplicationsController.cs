@@ -82,5 +82,19 @@ namespace PrivilegeAPI.Controllers
 
             return Ok(result);
         }
+
+        [HttpPut("id/{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<BaseResult>> SendToMedApplication(int id)
+        {
+            var result = await _applicationService.SendToMedApplicationAsync(id);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", $"Application {id} updated");
+
+            return Ok(result);
+        }
     }
 }

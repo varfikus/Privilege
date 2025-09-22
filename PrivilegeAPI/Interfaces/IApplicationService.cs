@@ -13,6 +13,8 @@ namespace PrivilegeAPI.Interfaces
 
         Task<BaseResult<ApplicationDto>> UpdateApplicationAsync(ApplicationDto applicationDto);
 
+        Task<BaseResult<ApplicationDto>> SendToMedApplicationAsync(int id);
+
 
         Task<CollectionResult<DeniedApplicationDto>> GetDeniedApplicationsAsync();
 

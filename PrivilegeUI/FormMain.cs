@@ -24,8 +24,8 @@ namespace PrivilegeUI
         #region Fields
 
         private HubConnection _hubConnection;
-        //private readonly string _apiBaseUrl = "http://192.168.69.236:5000";
-        private readonly string _apiBaseUrl = "http://localhost:5000";
+        private readonly string _apiBaseUrl = "http://192.168.69.236:5000";
+        //private readonly string _apiBaseUrl = "http://localhost:5000";
         private readonly HttpClient _httpClient;
         private System.Timers.Timer _connectionCheckTimer;
         /// <summary>
@@ -81,9 +81,9 @@ namespace PrivilegeUI
 
         private async void FormMain_Shown(object sender, EventArgs e)
         {
-            //CheckUpdate(false);
+            CheckUpdate(false);
 
-            var result = await _apiClient.GetAsync<BaseResult<UserDto>>($"api/users/id/{_userId}");
+            var result = await _apiClient.GetRawAsync<BaseResult<UserDto>>($"api/users/id/{_userId}");
 
             if (result == null)
             {
@@ -189,7 +189,7 @@ namespace PrivilegeUI
             OpenChildForm(new FormInfo(_apiClient, app, this));
         }
 
-        private void btn_apply_Click(object sender, EventArgs e)
+        private async void btn_apply_Click(object sender, EventArgs e)
         {
             if (dGV.CurrentRow == null)
             {
@@ -211,8 +211,20 @@ namespace PrivilegeUI
                 return;
             }
 
-            ActivateButton(sender);
-            OpenChildForm(new FormApply(_apiClient, app, this, true));
+            var result = await _apiClient.PutAsync<object, BaseResult<ApplicationDto>>($"api/applications/id/{app.Id}", null);
+            if (result != null && result.IsSuccess)
+            {
+                MessageBox.Show("Заявка успешно отправлена в МЭД.");
+                return;
+            }
+            else
+            {
+                MessageBox.Show($"Ошибка при обновлении заявки: {result.ErrorMessage ?? "Неизвестная ошибка"}");
+                return;
+            }
+
+            //ActivateButton(sender);
+            //OpenChildForm(new FormApply(_apiClient, app, this, true));
         }
 
         private void btn_denial_Click(object sender, EventArgs e)
@@ -373,7 +385,7 @@ namespace PrivilegeUI
 
         private void btn_update_Click(object sender, EventArgs e)
         {
-            //CheckUpdate(true);
+            CheckUpdate(true);
         }
 
         private void btn_error_Click(object sender, EventArgs e)
@@ -719,7 +731,7 @@ namespace PrivilegeUI
             {
                 try
                 {
-                    var response = await _apiClient.GetAsync<CollectionResult<DeniedApplication>>("api/deniedapplications");
+                    var response = await _apiClient.GetRawAsync<CollectionResult<DeniedApplication>>("api/deniedapplications");
 
                     if (response == null || !response.IsSuccess || response.Data == null)
                     {
@@ -763,7 +775,7 @@ namespace PrivilegeUI
             {
                 try
                 {
-                    var response = await _apiClient.GetAsync<CollectionResult<Application>>("api/applications");
+                    var response = await _apiClient.GetRawAsync<CollectionResult<Application>>("api/applications");
 
                     if (response == null || !response.IsSuccess || response.Data == null)
                     {
@@ -922,7 +934,7 @@ namespace PrivilegeUI
                 ServicePointManager.SecurityProtocol =
                     SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
-                string verJson = GetNewVersion("https://gupcit.com/data/update/mineconom/client/" + "version.json");
+                string verJson = GetNewVersion("https://gupcit.com/data/update/privilege/client/" + "version.json");
                 if (verJson == "")
                 {
                     if (search)

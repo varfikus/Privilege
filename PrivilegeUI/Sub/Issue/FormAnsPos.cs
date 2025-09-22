@@ -80,10 +80,18 @@ namespace PrivilegeUI.Sub.Issue
                     return;
                 }
 
+                string fio = fullApp.Body2.Container.Content.P[2].Person.Fio.Fam + " " +
+                             fullApp.Body2.Container.Content.P[2].Person.Fio.Im + " " +
+                             fullApp.Body2.Container.Content.P[2].Person.Fio.Ot;
+
+                string adress = fullApp.Body2.Container.Content.P[2].Person.AdressProj.Row.Raion + ", " +
+                                fullApp.Body2.Container.Content.P[2].Person.AdressProj.Row.Ulica + ", " +
+                                fullApp.Body2.Container.Content.P[2].Person.AdressProj.Row.Dom;
+
                 tB_operator.Text = UserInfo.CurrentUser.Name;
                 tB_operatorTel.Text = Properties.Settings.Default.UserTel;
-                tB_service.Text = fullApp.Body2.Servinfo.Nameservice;
-                tB_fio.Text = $"{fullApp.Body2.Container.Topheader.Tophead.PersData.Fam} {fullApp.Body2.Container.Topheader.Tophead.PersData.Im} {fullApp.Body2.Container.Topheader.Tophead.PersData.Ot}";
+                tB_service.Text = fullApp.Body2.Container.Header.ToString();
+                tB_fio.Text = fio;
             }
             catch (Exception ex)
             {
@@ -162,8 +170,8 @@ namespace PrivilegeUI.Sub.Issue
                 return false;
             }
 
-            if (!await GenerateHtmlxAndUploadAsync(fullApp.Body2.Servinfo.Idservice, fullApp.Body2.Servinfo.Nameservice, tB_fio.Text, tB_operator.Text, tB_operatorTel.Text))
-                return false;
+            //if (!await GenerateHtmlxAndUploadAsync(fullApp.Body2.Servinfo.Idservice, fullApp.Body2.Servinfo.Nameservice, tB_fio.Text, tB_operator.Text, tB_operatorTel.Text))
+            //    return false;
 
             return true;
         }

@@ -110,7 +110,7 @@ namespace PrivilegeAdmin
         {
             try
             {
-                var result = await _apiClient.GetAsync<CollectionResult<ApplicationDto>>("api/applications");
+                var result = await _apiClient.GetRawAsync<CollectionResult<ApplicationDto>>("api/applications");
 
                 if (result != null && result.IsSuccess && result.Data != null)
                 {

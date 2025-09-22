@@ -1,6 +1,7 @@
 ﻿using PrivilegeAPI;
 using PrivilegeAPI.Services;
 using PrivilegeUI.Classes;
+using PrivilegeUI.Models;
 using System.Xml.Serialization;
 using static PrivilegeUI.Models.FullApplication;
 using Application = PrivilegeAPI.Models.Application;
@@ -64,7 +65,7 @@ namespace PrivilegeUI.Sub
                     return;
                 }
 
-                var fullApp = await LoadHtmlxFromFtpAsync(_app.File.Path);
+                var fullApp = await LoadHtmlxFromApiAsync(_app.Orgnumber);
                 if (fullApp == null)
                 {
                     MessageBox.Show("Не удалось загрузить данные заявки.");
@@ -72,13 +73,21 @@ namespace PrivilegeUI.Sub
                     return;
                 }
 
-                tB_service.Text = fullApp.Body2.Servinfo.Nameservice;
-                tB_serviceId.Text = fullApp.Body2.Servinfo.Idservice.ToString();
+                string fio = fullApp.Body2.Container.Content.P[2].Person.Fio.Fam + " " +
+                             fullApp.Body2.Container.Content.P[2].Person.Fio.Im + " " +
+                             fullApp.Body2.Container.Content.P[2].Person.Fio.Ot;
+
+                string adress = fullApp.Body2.Container.Content.P[2].Person.AdressProj.Row.Raion + ", " +
+                                fullApp.Body2.Container.Content.P[2].Person.AdressProj.Row.Ulica + ", " +
+                                fullApp.Body2.Container.Content.P[2].Person.AdressProj.Row.Dom;
+
+                tB_service.Text = fullApp.Body2.Container.Header.Text;
+                tB_serviceId.Text = fullApp.Body2.Servinfo.Idgosuslug.ToString();
                 tB_npp.Text = _app.Id.ToString();
-                tB_fio.Text = fullApp.Body2.Container.Topheader.Tophead.PersData.Fam + " " + fullApp.Body2.Container.Topheader.Tophead.PersData.Im + " " + fullApp.Body2.Container.Topheader.Tophead.PersData.Ot;
-                tB_address.Text = fullApp.Body2.Container.Topheader.Tophead.AdressProj.Row.Raion + ", " + fullApp.Body2.Container.Topheader.Tophead.AdressProj.Row.Ulica + ", " + fullApp.Body2.Container.Topheader.Tophead.AdressProj.Row.Dom;
+                tB_fio.Text = fio;
+                tB_address.Text = adress;
                 tB_status.Text = EnumHelper.GetEnumDisplayName(_app.Status);
-                tB_dateAdd.Text = fullApp.Body2.Container.Dateblank.ToShortDateString();
+                tB_dateAdd.Text = fullApp.Body2.Container.Dateblank;
                 tB_dateEnd.Text = _app.DateEdit.ToShortDateString();
             }
             catch (Exception ex)
@@ -91,7 +100,7 @@ namespace PrivilegeUI.Sub
         {
             try
             {
-                await DownloadAndOpenFile(_app.File.Path, false);
+                await DownloadAndOpenFile($"Applications/New/Application_{_app.Orgnumber}.xml", false);
             }
             catch (Exception ex)
             {
@@ -103,7 +112,7 @@ namespace PrivilegeUI.Sub
         {
             try
             {
-                await DownloadAndOpenFile(_app.File.Path, true);
+                await DownloadAndOpenFile($"Applications/New/Application_{_app.Orgnumber}.xml", true);
             }
             catch (Exception ex)
             {
@@ -111,43 +120,19 @@ namespace PrivilegeUI.Sub
             }
         }
 
-        private async void btn_fileApplyDownload_Click(object sender, EventArgs e)
+        private void btn_fileApplyDownload_Click(object sender, EventArgs e)
         {
-            if (_app.Status == PrivilegeAPI.Models.StatusEnum.Apply || _app.Status == PrivilegeAPI.Models.StatusEnum.Final || _app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
-            {
-                await DownloadAndOpenFile("Applications/Apply/answer_" + _app.File.Name, false);
-            }
-            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.Denial || _app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
-            {
-                await DownloadAndOpenFile("Applications/Denial/answer_" + _app.File.Name, false);
-            }
-            else
-            {
-                MessageBox.Show("Невозможно загрузить файл, так как заявка не завершена.");
-            }
         }
 
-        private async void btn_fileApplyOpen_Click(object sender, EventArgs e)
+        private void btn_fileApplyOpen_Click(object sender, EventArgs e)
         {
-            if (_app.Status == PrivilegeAPI.Models.StatusEnum.Apply || _app.Status == PrivilegeAPI.Models.StatusEnum.Final || _app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
-            {
-                await DownloadAndOpenFile("Applications/Apply/answer_" + _app.File.Name, true);
-            }
-            else if (_app.Status == PrivilegeAPI.Models.StatusEnum.Denial ||_app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
-            {
-                await DownloadAndOpenFile("Applications/Denial/answer_" + _app.File.Name, true);
-            }
-            else
-            {
-                MessageBox.Show("Невозможно открыть файл, так как заявка не завершена.");
-            }
         }
 
         private async void btn_fileArrivedDownload_Click(object sender, EventArgs e)
         {
             try
             {
-                await DownloadAndOpenFile("Applications/Reply/answer_" + _app.File.Name, false);
+                await DownloadAndOpenFile($"Applications/Reply/Application_{_app.Orgnumber}.xml", false);
             }
             catch (Exception ex)
             {
@@ -159,7 +144,7 @@ namespace PrivilegeUI.Sub
         {
             try
             {
-                await DownloadAndOpenFile("Applications/Reply/answer_" + _app.File.Name, true);
+                await DownloadAndOpenFile($"Applications/Reply/Application_{_app.Orgnumber}.xml", true);
             }
             catch (Exception ex)
             {
@@ -171,11 +156,11 @@ namespace PrivilegeUI.Sub
         {
             if (_app.Status == PrivilegeAPI.Models.StatusEnum.Final)
             {
-                await DownloadAndOpenFile("Applications/AnswerPos/answer_" + _app.File.Name, false);
+                await DownloadAndOpenFile($"Applications/Final/Application_{_app.Orgnumber}.xml", false);
             }
             else if (_app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
             {
-                await DownloadAndOpenFile("Applications/AnswerNeg/answer_" + _app.File.Name, false);
+                await DownloadAndOpenFile($"Applications/Final/Application_{_app.Orgnumber}.xml", false);
             }
             else
             {
@@ -187,11 +172,11 @@ namespace PrivilegeUI.Sub
         {
             if (_app.Status == PrivilegeAPI.Models.StatusEnum.Final)
             {
-                await DownloadAndOpenFile("Applications/AnswerPos/answer_" + _app.File.Name, true);
+                await DownloadAndOpenFile($"Applications/Final/Application_{_app.Orgnumber}.xml", true);
             }
             else if (_app.Status == PrivilegeAPI.Models.StatusEnum.DenialFinal)
             {
-                await DownloadAndOpenFile("Applications/AnswerNeg/answer_" + _app.File.Name, true);
+                await DownloadAndOpenFile($"Applications/Final/Application_{_app.Orgnumber}.xml", true);
             }
             else
             {
@@ -199,66 +184,45 @@ namespace PrivilegeUI.Sub
             }
         }
 
-        private async Task DownloadAndOpenFile(string fileName, bool openAfterDownload)
+        private async Task DownloadAndOpenFile(string remotePath, bool openAfterDownload)
         {
             try
             {
-                string localPath = FileHelper.PrepareTempFilePath(fileName);
-                string localDir = Path.GetDirectoryName(localPath);
+                string tempDir = Path.Combine(Path.GetTempPath(), Path.GetDirectoryName(remotePath) ?? string.Empty);
+                Directory.CreateDirectory(tempDir);
 
-                if (!Directory.Exists(localDir))
-                {
-                    Directory.CreateDirectory(localDir);
-                }
+                string fileName = Path.GetFileName(remotePath);
+                string localPath = Path.Combine(tempDir, fileName);
 
-                if (System.IO.File.Exists(localPath))
+                if (!File.Exists(localPath))
                 {
-                    if (openAfterDownload)
+                    var response = await _apiClient.GetRawAsync($"/api/ftp/file?remotePath={Uri.EscapeDataString(remotePath)}");
+
+                    if (!response.IsSuccessStatusCode)
                     {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = localPath,
-                            UseShellExecute = true,
-                            WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal
-                        });
-                    }
-                    return;
-                }
-
-                await ftpContext.ConnectAsync();
-
-                string remotePath = fileName;
-
-                if (await ftpContext.FileExistsAsync(remotePath))
-                {
-                    using (var stream = await ftpContext.OpenReadAsync(remotePath))
-                    using (var fileStream = System.IO.File.Create(localPath))
-                    {
-                        await stream.CopyToAsync(fileStream);
+                        MessageBox.Show("Файл не найден на сервере: " + response.ReasonPhrase);
+                        return;
                     }
 
-                    if (openAfterDownload)
+                    using (var fs = new FileStream(localPath, FileMode.Create, FileAccess.Write))
                     {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = localPath,
-                            UseShellExecute = true,
-                            WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal
-                        });
+                        await response.Content.CopyToAsync(fs);
                     }
                 }
-                else
+
+                if (openAfterDownload)
                 {
-                    MessageBox.Show("Файл не найден на сервере.");
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = localPath,
+                        UseShellExecute = true,
+                        WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal
+                    });
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Ошибка при работе с файлом: {ex.Message}");
-            }
-            finally
-            {
-                await ftpContext.DisconnectAsync();
             }
         }
 
@@ -267,6 +231,7 @@ namespace PrivilegeUI.Sub
             _parentForm?.ResetButton();
             Close();
         }
+
         #endregion
 
 
@@ -326,20 +291,35 @@ namespace PrivilegeUI.Sub
             }
         }
 
-        public async Task<Htmlx> LoadHtmlxFromFtpAsync(string remoteFtpPath)
+        public async Task<Htmlx?> LoadHtmlxFromApiAsync(string orgnumber)
         {
             try
             {
-                string fileName = Path.GetFileName(remoteFtpPath);
-                string tempPath = FileHelper.PrepareTempFilePath(fileName);
+                string remotePath = $"Applications/New/Application_{orgnumber}.xml";
 
-                if (!File.Exists(tempPath))
+                var response = await _apiClient.GetRawAsync($"/api/ftp/file?remotePath={Uri.EscapeDataString(remotePath)}");
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    await ftpContext.DownloadFileAsync(remoteFtpPath, tempPath);
+                    MessageBox.Show("Ошибка при загрузке файла с сервера: " + response.ReasonPhrase);
+                    return null;
+                }
+
+                string fileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"')
+                                  ?? Path.GetFileName(remotePath);
+
+                string tempDir = Path.Combine(Path.GetTempPath(), Path.GetDirectoryName(remotePath) ?? string.Empty);
+                Directory.CreateDirectory(tempDir);
+
+                string tempPath = Path.Combine(tempDir, fileName);
+
+                using (var fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write))
+                {
+                    await response.Content.CopyToAsync(fs);
                 }
 
                 XmlSerializer serializer = new XmlSerializer(typeof(Htmlx));
-                using (FileStream fs = new FileStream(tempPath, FileMode.Open))
+                using (FileStream fs = new FileStream(tempPath, FileMode.Open, FileAccess.Read))
                 {
                     var htmlx = (Htmlx)serializer.Deserialize(fs);
                     return htmlx;
@@ -351,6 +331,33 @@ namespace PrivilegeUI.Sub
                 return null;
             }
         }
+
+        //public async Task<Htmlx> LoadHtmlxFromFtpAsync(string orgnumber)
+        //{
+        //    try
+        //    {
+        //        string remoteFtpPath = $"Applications/New/Application_{orgnumber}.xml";
+        //        string fileName = Path.GetFileName(remoteFtpPath);
+        //        string tempPath = FileHelper.PrepareTempFilePath(fileName);
+
+        //        if (!File.Exists(tempPath))
+        //        {
+        //            await ftpContext.DownloadFileAsync(remoteFtpPath, tempPath);
+        //        }
+
+        //        XmlSerializer serializer = new XmlSerializer(typeof(Htmlx));
+        //        using (FileStream fs = new FileStream(tempPath, FileMode.Open))
+        //        {
+        //            var htmlx = (Htmlx)serializer.Deserialize(fs);
+        //            return htmlx;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show("Ошибка при загрузке/десериализации XML: " + ex.Message);
+        //        return null;
+        //    }
+        //}
 
         #endregion
     }

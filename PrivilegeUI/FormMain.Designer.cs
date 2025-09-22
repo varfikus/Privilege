@@ -38,6 +38,7 @@ namespace PrivilegeUI
             pB_header = new PictureBox();
             lblTitleClildForm = new Label();
             panelMenu = new Panel();
+            dGV = new PrivilegeUI.MyControls.DoubleBufferedDataGridView();
             btn_denyAnswer = new Button();
             btn_cancel = new Button();
             btn_archive = new Button();
@@ -72,6 +73,19 @@ namespace PrivilegeUI
             // backgroundWorker1
             // 
             backgroundWorker1.WorkerReportsProgress = true;
+            // 
+            // dGV
+            // 
+            dGV.AllowUserToAddRows = false;
+            dGV.AllowUserToDeleteRows = false;
+            dGV.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dGV.Dock = DockStyle.Fill;
+            dGV.Location = new Point(0, 0);
+            dGV.Name = "dGV";
+            dGV.ReadOnly = true;
+            dGV.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dGV.Size = new Size(1027, 782);
+            dGV.TabIndex = 0;
             // 
             // btn_exit
             // 

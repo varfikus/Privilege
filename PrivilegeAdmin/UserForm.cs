@@ -96,7 +96,7 @@ namespace PrivilegeAdmin
         {
             try
             {
-                var result = await _apiClient.GetAsync<BaseResult<UserDto>>($"api/users/id/{userId}");
+                var result = await _apiClient.GetRawAsync<BaseResult<UserDto>>($"api/users/id/{userId}");
 
                 if (result == null)
                 {

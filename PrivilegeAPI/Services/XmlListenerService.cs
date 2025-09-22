@@ -296,9 +296,11 @@ namespace PrivilegeAPI.Services
                             var fileName = Path.GetFileName(file);
 
                             if (knownFinals.Contains(fileName) || knownSet.Contains(fileName))
+                            {
                                 continue;
+                            }
 
-                            _logger.LogInformation("{filesCount} новых файлов, начинаю обработку...", files.Count);
+                            _logger.LogInformation("Обработка файла {File}", fileName);
 
                             var localFolder = Path.Combine(AppContext.BaseDirectory, "Applications", ftpFolder);
                             Directory.CreateDirectory(localFolder);
@@ -383,7 +385,7 @@ namespace PrivilegeAPI.Services
                     _logger.LogError(ex, "Ошибка при проверке FTP");
                 }
 
-                await Task.Delay(TimeSpan.FromMinutes(2), cancellationToken);
+                await Task.Delay(TimeSpan.FromMinutes(5), cancellationToken);
             }
         }
 

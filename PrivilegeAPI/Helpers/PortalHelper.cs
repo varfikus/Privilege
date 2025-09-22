@@ -1,5 +1,7 @@
-﻿using APB.CryptoLib.Asn1.Crmf;
+﻿using APB.CryptoLib;
+using APB.CryptoLib.Asn1.Crmf;
 using APB.CryptoLib.Crypto.Tls;
+using APB.CryptoLib.GSS;
 using FluentFTP;
 using RestSharp;
 using System.Net;
@@ -37,7 +39,7 @@ namespace PrivilegeAPI.Helpers
         /// <summary>
         /// Подписать XmlDocument и вернуть подпись как XElement.
         /// </summary>
-        public static (XmlDocument signedDoc, XElement signature) SignDocument(XmlDocument doc, MyCert cert)
+        public static (XmlDocument signedDoc, XElement signature) SignDocumentR(XmlDocument doc, MyCert cert)
         {
             if (cert == null)
                 throw new InvalidOperationException("Сертификат не найден");
@@ -66,6 +68,38 @@ namespace PrivilegeAPI.Helpers
             signatureNode.ParentNode?.RemoveChild(signatureNode);
 
             return (signedXml, signatureElement);
+        }
+
+        /// <summary>
+        /// Подписать XmlDocument
+        /// </summary>
+        public static XmlDocument SignDocument(XmlDocument doc, MyCert cert)
+        {
+            if (cert == null)
+                throw new InvalidOperationException("Сертификат не найден");
+
+            XmlDocument signedXml = Crypto.FileSignCadesBesX(doc, cert);
+
+            var nsmgr = new XmlNamespaceManager(signedXml.NameTable);
+            nsmgr.AddNamespace("ds", "http://www.w3.org/2000/09/xmldsig#");
+
+            XmlNode signatureNode = signedXml.SelectSingleNode("//ds:Signature", nsmgr);
+            if (signatureNode == null)
+                throw new Exception("Подпись не найдена");
+
+            return signedXml;
+        }
+
+        /// <summary>
+        /// Проверить наличие подписи в XmlDocument
+        /// </summary>
+        public static bool IsSigned(string filepath)
+        {
+            using (Stream streamDoc = GenerateStreamFromString(GetStringFromFile(filepath)))
+            {
+                SignatureValidationResult[] results = GssSign.VerifyXml(streamDoc);
+                return results != null && results.Any(r => r.IsValid);
+            }
         }
 
         /// <summary>
@@ -281,10 +315,11 @@ namespace PrivilegeAPI.Helpers
         /// <summary>
         /// POST запрос
         /// </summary>
-        /// <param name="url">POST-запрос по следуюзему URL</param>
+        /// <param name="url">POST-запрос по следующему URL</param>
         /// <param name="_params">Параметры выполнения услуги (JSON строка)</param>
         /// <param name="signature">Электронная цифровая подпись</param>
         /// <param name="file">Документ, предоставляемый при подтверждении</param>
+        /// <param name="text">Текст для отображения на портале</param>
         /// <returns></returns>
         private static string Post(string url, string _params, string signature, string file, string text)
         {

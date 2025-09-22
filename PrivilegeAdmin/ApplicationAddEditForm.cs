@@ -139,7 +139,7 @@ namespace PrivilegeAdmin
         {
             try
             {
-                var result = await _apiClient.GetAsync<BaseResult<ApplicationDto>>($"api/applications/id/{orderId}");
+                var result = await _apiClient.GetRawAsync<BaseResult<ApplicationDto>>($"api/applications/id/{orderId}");
 
                 if (result == null)
                 {

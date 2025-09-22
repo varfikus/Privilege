@@ -66,7 +66,7 @@ namespace PrivilegeAPI
         /// <param name="url">Подкаталог API</param>
         /// <param name="cancel">Токен отмены</param>
         /// <returns>Данные из API</returns>
-        public async Task<T?> GetAsync<T>(string url, CancellationToken cancel = default)
+        public async Task<T?> GetRawAsync<T>(string url, CancellationToken cancel = default)
         {
             var link = $"{_client.BaseAddress?.OriginalString}/{TrimUrl(url)}";
             var response = await ExecuteGetRequestAsync<T>(link, cancel).ConfigureAwait(false);
@@ -411,6 +411,13 @@ namespace PrivilegeAPI
             LastCode = response.StatusCode;
             LastContent = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
 
+            return response;
+        }
+
+        public async Task<HttpResponseMessage> GetRawAsync(string url, CancellationToken cancellationToken = default)
+        {
+            var response = await _client.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
             return response;
         }
 

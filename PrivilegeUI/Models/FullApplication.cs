@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace PrivilegeUI.Models
@@ -12,266 +13,360 @@ namespace PrivilegeUI.Models
         //    var test = (Htmlx)serializer.Deserialize(reader);
         // }
 
-        [XmlRoot(ElementName = "pers_data", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class PersData
+        [XmlRoot(ElementName = "nameru")]
+        public class Nameru
         {
-            [XmlElement(ElementName = "fam", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Fam;
 
-            [XmlElement(ElementName = "im", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Im;
-
-            [XmlElement(ElementName = "ot", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Ot;
+            [XmlElement(ElementName = "br")]
+            public object Br { get; set; }
         }
 
-        [XmlRoot(ElementName = "row", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class Row
+        [XmlRoot(ElementName = "reg")]
+        public class Reg
         {
-            [XmlElement(ElementName = "raion", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Raion;
 
-            [XmlElement(ElementName = "gorod", Namespace = "http://www.w3.org/1999/xhtml")]
-            public object Gorod;
+            [XmlElement(ElementName = "datareg")]
+            public object Datareg { get; set; }
 
-            [XmlElement(ElementName = "ulica", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Ulica;
+            [XmlElement(ElementName = "regnumber")]
+            public object Regnumber { get; set; }
 
-            [XmlElement(ElementName = "dom", Namespace = "http://www.w3.org/1999/xhtml")]
-            public int Dom;
-
-            [XmlElement(ElementName = "kvartira", Namespace = "http://www.w3.org/1999/xhtml")]
-            public object Kvartira;
-
-            [XmlElement(ElementName = "kladr", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Kladr;
-
-            [XmlElement(ElementName = "telefon", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Telefon;
-
-            [XmlElement(ElementName = "email", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Email;
+            [XmlElement(ElementName = "uslugnumber")]
+            public int Uslugnumber { get; set; }
         }
 
-        [XmlRoot(ElementName = "adress_proj", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class AdressProj
+        [XmlRoot(ElementName = "header")]
+        public class Header
         {
-            [XmlElement(ElementName = "row", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Row Row;
+            [XmlText]
+            public string Text { get; set; }
+
+            [XmlAnyElement("br")]
+            public XmlElement Br { get; set; }
         }
 
-        [XmlRoot(ElementName = "vidan", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class Vidan
+        [XmlRoot(ElementName = "legalentity")]
+        public class Legalentity
         {
-            [XmlElement(ElementName = "kem", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Kem;
 
-            [XmlElement(ElementName = "vidan", Namespace = "http://www.w3.org/1999/xhtml")]
-            public object Vidan1;
+            [XmlElement(ElementName = "kodorgout")]
+            public int Kodorgout { get; set; }
+
+            [XmlElement(ElementName = "nameorg")]
+            public string Nameorg { get; set; }
+
+            [XmlElement(ElementName = "structuralsubdivision")]
+            public object Structuralsubdivision { get; set; }
+
+            [XmlElement(ElementName = "nameorgsub")]
+            public object Nameorgsub { get; set; }
+
+            [XmlElement(ElementName = "post")]
+            public string Post { get; set; }
         }
 
-        [XmlRoot(ElementName = "passport", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class Passport
+        [XmlRoot(ElementName = "destination")]
+        public class Destination
         {
-            [XmlElement(ElementName = "ser", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Ser;
 
-            [XmlElement(ElementName = "nom", Namespace = "http://www.w3.org/1999/xhtml")]
-            public int Nom;
-
-            [XmlElement(ElementName = "vidan", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Vidan Vidan;
+            [XmlElement(ElementName = "legalentity")]
+            public Legalentity Legalentity { get; set; }
         }
 
-        [XmlRoot(ElementName = "passport_data", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class PassportData
+        [XmlRoot(ElementName = "destinations")]
+        public class Destinations
         {
-            [XmlElement(ElementName = "passport", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Passport Passport;
+
+            [XmlElement(ElementName = "destination")]
+            public Destination Destination { get; set; }
         }
 
-        [XmlRoot(ElementName = "tophead", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class Tophead
+        [XmlRoot(ElementName = "p")]
+        public class P
         {
-            [XmlElement(ElementName = "mesto", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Mesto;
 
-            [XmlElement(ElementName = "pers_data", Namespace = "http://www.w3.org/1999/xhtml")]
-            public PersData PersData;
+            [XmlElement(ElementName = "appeal")]
+            public string Appeal { get; set; }
 
-            [XmlElement(ElementName = "adress_proj", Namespace = "http://www.w3.org/1999/xhtml")]
-            public AdressProj AdressProj;
+            [XmlAttribute(AttributeName = "align")]
+            public string Align { get; set; }
 
-            [XmlElement(ElementName = "passport_data", Namespace = "http://www.w3.org/1999/xhtml")]
-            public PassportData PassportData;
+            [XmlText]
+            public string Text { get; set; }
 
-            [XmlElement(ElementName = "row", Namespace = "http://www.w3.org/1999/xhtml")]
-            public List<Row> Row;
+            [XmlElement(ElementName = "card_info")]
+            public CardInfo CardInfo { get; set; }
+
+            [XmlElement(ElementName = "person")]
+            public Person Person { get; set; }
+
+            [XmlElement(ElementName = "uslov")]
+            public object Uslov { get; set; }
         }
 
-        [XmlRoot(ElementName = "topheader", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class Topheader
-        {
-            [XmlElement(ElementName = "tophead", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Tophead Tophead;
-        }
-
-        [XmlRoot(ElementName = "card_data", Namespace = "http://www.w3.org/1999/xhtml")]
+        [XmlRoot(ElementName = "card_data")]
         public class CardData
         {
-            [XmlElement(ElementName = "card_id", Namespace = "http://www.w3.org/1999/xhtml")]
-            public int CardId;
 
-            [XmlElement(ElementName = "last_4_digits", Namespace = "http://www.w3.org/1999/xhtml")]
-            public int Last4Digits;
+            [XmlElement(ElementName = "card_id")]
+            public int CardId { get; set; }
+
+            [XmlElement(ElementName = "last_4_digits")]
+            public int Last4Digits { get; set; }
         }
 
-        [XmlRoot(ElementName = "a", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class A
+        [XmlRoot(ElementName = "card_info")]
+        public class CardInfo
         {
-            [XmlAttribute(AttributeName = "download", Namespace = "")]
-            public string Download;
 
-            [XmlAttribute(AttributeName = "href", Namespace = "")]
-            public string Href;
+            [XmlElement(ElementName = "card_data")]
+            public CardData CardData { get; set; }
 
-            [XmlText]
-            public string Text;
+            [XmlElement(ElementName = "lgota_text")]
+            public string LgotaText { get; set; }
         }
 
-        [XmlRoot(ElementName = "application", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class Application
+        [XmlRoot(ElementName = "fio")]
+        public class Fio
         {
-            [XmlElement(ElementName = "a", Namespace = "http://www.w3.org/1999/xhtml")]
-            public A A;
 
-            [XmlElement(ElementName = "data", Namespace = "http://www.w3.org/1999/xhtml")]
-            public object Data;
+            [XmlElement(ElementName = "fam")]
+            public string Fam { get; set; }
+
+            [XmlElement(ElementName = "im")]
+            public string Im { get; set; }
+
+            [XmlElement(ElementName = "ot")]
+            public string Ot { get; set; }
         }
 
-        [XmlRoot(ElementName = "applications", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class Applications
+        [XmlRoot(ElementName = "row")]
+        public class Row
         {
-            [XmlElement(ElementName = "application", Namespace = "http://www.w3.org/1999/xhtml")]
-            public List<Application> Application;
+
+            [XmlElement(ElementName = "raion")]
+            public string Raion { get; set; }
+
+            [XmlElement(ElementName = "gorod")]
+            public object Gorod { get; set; }
+
+            [XmlElement(ElementName = "ulica")]
+            public string Ulica { get; set; }
+
+            [XmlElement(ElementName = "dom")]
+            public int Dom { get; set; }
+
+            [XmlElement(ElementName = "kvartira")]
+            public object Kvartira { get; set; }
+
+            [XmlElement(ElementName = "kladr")]
+            public string Kladr { get; set; }
+
+            [XmlElement(ElementName = "telefon")]
+            public double Telefon { get; set; }
+
+            [XmlElement(ElementName = "email")]
+            public string Email { get; set; }
         }
 
-        [XmlRoot(ElementName = "uslov", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class Uslov
+        [XmlRoot(ElementName = "adress_proj")]
+        public class AdressProj
         {
-            [XmlElement(ElementName = "p", Namespace = "http://www.w3.org/1999/xhtml")]
-            public List<string> P;
+
+            [XmlElement(ElementName = "row")]
+            public Row Row { get; set; }
         }
 
-        [XmlRoot(ElementName = "content", Namespace = "http://www.w3.org/1999/xhtml")]
+        [XmlRoot(ElementName = "vidan")]
+        public class Vidan
+        {
+
+            [XmlElement(ElementName = "kem")]
+            public string Kem { get; set; }
+        }
+
+        [XmlRoot(ElementName = "passport")]
+        public class Passport
+        {
+
+            [XmlElement(ElementName = "ser")]
+            public string Ser { get; set; }
+
+            [XmlElement(ElementName = "nom")]
+            public int Nom { get; set; }
+
+            [XmlElement(ElementName = "vidan")]
+            public Vidan Vidan { get; set; }
+        }
+
+        [XmlRoot(ElementName = "passport_data")]
+        public class PassportData
+        {
+
+            [XmlElement(ElementName = "passport")]
+            public Passport Passport { get; set; }
+        }
+
+        [XmlRoot(ElementName = "person")]
+        public class Person
+        {
+
+            [XmlElement(ElementName = "fio")]
+            public Fio Fio { get; set; }
+
+            [XmlElement(ElementName = "adress_proj")]
+            public AdressProj AdressProj { get; set; }
+
+            [XmlElement(ElementName = "passport_data")]
+            public PassportData PassportData { get; set; }
+
+            [XmlElement(ElementName = "row")]
+            public List<Row> Row { get; set; }
+        }
+
+        [XmlRoot(ElementName = "content")]
         public class Content
         {
-            [XmlElement(ElementName = "card_data", Namespace = "http://www.w3.org/1999/xhtml")]
-            public CardData CardData;
 
-            [XmlElement(ElementName = "lgota_text", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string LgotaText;
+            [XmlElement(ElementName = "p")]
+            public List<P> P { get; set; }
 
-            [XmlElement(ElementName = "applications", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Applications Applications;
-
-            [XmlElement(ElementName = "uslov", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Uslov Uslov;
+            [XmlElement(ElementName = "blok")]
+            public object Blok { get; set; }
         }
 
-        [XmlRoot(ElementName = "container", Namespace = "http://www.w3.org/1999/xhtml")]
-        public class Container
+        [XmlRoot(ElementName = "a")]
+        public class A
         {
-            [XmlElement(ElementName = "topheader", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Topheader Topheader;
 
-            [XmlElement(ElementName = "centertitle", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Centertitle;
+            [XmlAttribute(AttributeName = "download")]
+            public string Download { get; set; }
 
-            [XmlElement(ElementName = "content", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Content Content;
-
-            [XmlElement(ElementName = "dateblank", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string RawDate;
-
-            [XmlIgnore]
-            public DateTime Dateblank =>
-            DateTime.TryParseExact(RawDate, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
-                ? parsed
-                : default;
-
-            [XmlElement(ElementName = "style", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Style;
-
-            [XmlAttribute(AttributeName = "id", Namespace = "")]
-            public string Id;
+            [XmlAttribute(AttributeName = "href")]
+            public string Href { get; set; }
 
             [XmlText]
-            public string Text;
+            public string Text { get; set; }
         }
 
-        [XmlRoot(ElementName = "servinfo", Namespace = "http://www.w3.org/1999/xhtml")]
+        [XmlRoot(ElementName = "application")]
+        public class Application
+        {
+
+            [XmlElement(ElementName = "a")]
+            public A A { get; set; }
+
+            [XmlElement(ElementName = "data")]
+            public object Data { get; set; }
+        }
+
+        [XmlRoot(ElementName = "applications")]
+        public class Applications
+        {
+
+            [XmlElement(ElementName = "application")]
+            public List<Application> Application { get; set; }
+        }
+
+        [XmlRoot(ElementName = "container")]
+        public class Container
+        {
+
+            [XmlElement(ElementName = "e-doc")]
+            public string Edoc { get; set; }
+
+            [XmlElement(ElementName = "nameru")]
+            public Nameru Nameru { get; set; }
+
+            [XmlElement(ElementName = "reg")]
+            public Reg Reg { get; set; }
+
+            [XmlElement(ElementName = "grifrestriction")]
+            public object Grifrestriction { get; set; }
+
+            [XmlElement(ElementName = "header")]
+            public Header Header { get; set; }
+
+            [XmlElement(ElementName = "destinations")]
+            public Destinations Destinations { get; set; }
+
+            [XmlElement(ElementName = "content")]
+            public Content Content { get; set; }
+
+            [XmlElement(ElementName = "applications")]
+            public Applications Applications { get; set; }
+
+            [XmlElement(ElementName = "kodformdoc")]
+            public object Kodformdoc { get; set; }
+
+            [XmlElement(ElementName = "kodorg")]
+            public int Kodorg { get; set; }
+
+            [XmlElement(ElementName = "kodorgsub")]
+            public object Kodorgsub { get; set; }
+
+            [XmlElement(ElementName = "dateblank")]
+            public string Dateblank { get; set; }
+
+            [XmlElement(ElementName = "style")]
+            public List<string> Style { get; set; }
+
+            [XmlAttribute(AttributeName = "id")]
+            public string Id { get; set; }
+
+            [XmlText]
+            public string Text { get; set; }
+        }
+
+        [XmlRoot(ElementName = "servinfo")]
         public class Servinfo
         {
-            [XmlElement(ElementName = "signaturesxml", Namespace = "http://www.w3.org/1999/xhtml")]
-            public List<object> Signaturesxml;
 
-            [XmlElement(ElementName = "idgosuslug", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Idgosuslug;
+            [XmlElement(ElementName = "signaturesxml")]
+            public object Signaturesxml { get; set; }
 
-            [XmlElement(ElementName = "region", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Region;
+            [XmlElement(ElementName = "idgosuslug")]
+            public int Idgosuslug { get; set; }
 
-            [XmlElement(ElementName = "electronic", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Electronic;
+            [XmlElement(ElementName = "resultgosuslug")]
+            public object Resultgosuslug { get; set; }
 
-            [XmlElement(ElementName = "idservice", Namespace = "http://www.w3.org/1999/xhtml")]
-            public int Idservice;
+            [XmlElement(ElementName = "idxml")]
+            public object Idxml { get; set; }
 
-            [XmlElement(ElementName = "nameservice", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Nameservice;
+            [XmlElement(ElementName = "timestampout")]
+            public object Timestampout { get; set; }
 
-            [XmlElement(ElementName = "kladr_prop", Namespace = "http://www.w3.org/1999/xhtml")]
-            public object KladrProp;
-
-            [XmlElement(ElementName = "kladr_about", Namespace = "http://www.w3.org/1999/xhtml")]
-            public object KladrAbout;
-
-            [XmlElement(ElementName = "lgota", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Lgota;
-
-            [XmlElement(ElementName = "guid", Namespace = "http://www.w3.org/1999/xhtml")]
-            public string Guid;
-
-            [XmlElement(ElementName = "isul", Namespace = "http://www.w3.org/1999/xhtml")]
-            public bool Isul;
+            [XmlElement(ElementName = "timestampin")]
+            public object Timestampin { get; set; }
         }
 
-        [XmlRoot(ElementName = "body2", Namespace = "http://www.w3.org/1999/xhtml")]
+        [XmlRoot(ElementName = "body2")]
         public class Body2
         {
 
-            [XmlElement(ElementName = "container", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Container Container;
+            [XmlElement(ElementName = "container")]
+            public Container Container { get; set; }
 
-            [XmlElement(ElementName = "servinfo", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Servinfo Servinfo;
+            [XmlElement(ElementName = "servinfo")]
+            public Servinfo Servinfo { get; set; }
         }
 
         [XmlRoot(ElementName = "htmlx", Namespace = "http://www.w3.org/1999/xhtml")]
         public class Htmlx
         {
-            [XmlElement(ElementName = "body2", Namespace = "http://www.w3.org/1999/xhtml")]
-            public Body2 Body2;
 
-            [XmlAttribute(AttributeName = "xmlns", Namespace = "")]
-            public string Xmlns;
+            [XmlElement(ElementName = "body2")]
+            public Body2 Body2 { get; set; }
 
-            [XmlElement(ElementName = "lang", Namespace = "http://www.w3.org/XML/1998/namespace")]
-            public List<string> Lang;
+            [XmlAttribute(AttributeName = "xmlns")]
+            public string Xmlns { get; set; }
+
+            [XmlElement(ElementName = "lang")]
+            public List<string> Lang { get; set; }
 
             [XmlText]
-            public string Text;
+            public string Text { get; set; }
         }
     }
 }

@@ -10,10 +10,12 @@ namespace PrivilegeAPI.Services
     public class ApplicationService : IApplicationService
     {
         private readonly ApplicationDbContext _context;
+        private readonly AnswerService _answerService;
 
-        public ApplicationService(ApplicationDbContext context)
+        public ApplicationService(ApplicationDbContext context, AnswerService answerService)
         {
             _context = context;
+            _answerService = answerService;
         }
 
         public async Task<CollectionResult<ApplicationDto>> GetApplicationsAsync()
@@ -131,6 +133,62 @@ namespace PrivilegeAPI.Services
                 existingApplication.DateEdit = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
+
+                return new BaseResult<ApplicationDto>
+                {
+                    Data = applicationDto
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResult<ApplicationDto>
+                {
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+
+        public async Task<BaseResult<ApplicationDto>> SendToMedApplicationAsync(int id)
+        {
+            try
+            {
+                ApplicationDto applicationDto;
+                var app = await _context.Applications.FindAsync(id);
+
+                if (app == null)
+                    return new BaseResult<ApplicationDto>
+                    {
+                        ErrorMessage = "Application not found"
+                    };
+
+                if (await _answerService.SendToMedAsync(app))
+                {
+                    app.Status = StatusEnum.Delivered;
+                    app.DateEdit = DateTime.Now;
+                    await _context.SaveChangesAsync();
+
+                    applicationDto = new ApplicationDto
+                    {
+                        Id = app.Id,
+                        Idgosuslug = app.Idgosuslug,
+                        Org = app.Org,
+                        Orgout = app.Orgout,
+                        Orgnumber = app.Orgnumber,
+                        Uslugnumber = app.Uslugnumber,
+                        Status = app.Status,
+                        DateAdd = app.DateAdd,
+                        DateEdit = app.DateEdit,
+                        FileId = app.FileId,
+                        File = app.File
+                    };
+                }
+                else
+                {
+                    return new BaseResult<ApplicationDto>
+                    {
+                        ErrorMessage = "Failed to send application to Med"
+                    };
+                }
 
                 return new BaseResult<ApplicationDto>
                 {

@@ -175,7 +175,7 @@ namespace PrivilegeAdmin
         {
             try
             {
-                var result = await _apiClient.GetAsync<CollectionResult<User>>("api/users");
+                var result = await _apiClient.GetRawAsync<CollectionResult<User>>("api/users");
 
                 if (result != null && result.IsSuccess && result.Data != null)
                 {
